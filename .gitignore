@@ -137,3 +137,18 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+#
+
+# VS Code settings
+.vscode/
+
+# Windows system files
+Thumbs.db
+
+# Docker overrides
+docker-compose.override.yml
+
+# Temp/test artifacts
+tmp/
+test-results/
