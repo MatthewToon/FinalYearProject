@@ -5,8 +5,8 @@ This project investigates the behaviour of two architectural approaches for a sm
 
 The system is being implemented in two versions:
 
-- **Monolithic architecture** – a single Node.js server process with centralised in-memory game state
-- **Hybrid service-oriented / event-driven architecture** – a split design using separate services and Redis Pub/Sub
+- **Monolithic architecture:** a single Node.js server process with centralised in-memory game state
+- **Hybrid service-oriented / event-driven architecture:** a split design using separate services and Redis Pub/Sub
 
 # Prerequisites
 1. Install Node.js (version 24.14.0 (LTS) recommended)
