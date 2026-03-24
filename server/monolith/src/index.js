@@ -1,3 +1,16 @@
+/**
+ * Monolith server entry point.
+ *
+ * This file bootstraps the backend runtime by:
+ * - loading configuration
+ * - creating the Express HTTP server
+ * - creating the Socket.IO server
+ * - exposing health endpoints
+ * - registering socket handlers
+ *
+ * It should remain an entry point, not a place for business logic.
+ */
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");

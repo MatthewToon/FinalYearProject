@@ -1,3 +1,13 @@
+/*
+ * HELLO / WELCOME protocol handler.
+ *
+ * This handler receives the initial HELLO message from a client, validates
+ * the common message envelope, delegates handshake logic to the handshake
+ * service, and emits either WELCOME or ERROR.
+ *
+ * It is the first protocol entry point after socket connection.
+ */
+
 const MESSAGE_TYPES = require("../protocol/messageTypes");
 const ERROR_CODES = require("../protocol/errorCodes");
 const {

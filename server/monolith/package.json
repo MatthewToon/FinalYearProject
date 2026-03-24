@@ -20,6 +20,7 @@
     "express": "^5.2.1",
     "pg": "^8.20.0",
     "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "ws": "^8.19.0"
   },
   "devDependencies": {
@@ -28,5 +29,4 @@
   "engines": {
     "node": ">= 22 < 23"
   }
-  
 }
