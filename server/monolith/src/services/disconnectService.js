@@ -13,7 +13,7 @@
 
 const sessionStore = require("../state/sessionStore");
 
-function handleDisconnect(socketId) {
+async function handleDisconnect(socketId) {
   const session = sessionStore.findSessionBySocketId(socketId);
 
   if (!session) {
@@ -36,7 +36,7 @@ function handleDisconnect(socketId) {
     disconnectedPlayerId = session.players.black.playerId;
   }
 
-  sessionStore.saveSession(session);
+  await sessionStore.saveSession(session);
 
   return {
     ok: true,

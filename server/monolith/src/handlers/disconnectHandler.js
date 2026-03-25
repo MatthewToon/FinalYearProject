@@ -15,10 +15,10 @@ const broadcastService = require("../services/broadcastService");
 const syncService = require("../services/syncService");
 
 function registerDisconnectHandler(io, socket) {
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     console.log(`Socket disconnected: ${socket.id}`);
 
-    const result = disconnectService.handleDisconnect(socket.id);
+    const result = await disconnectService.handleDisconnect(socket.id);
 
     connectionRegistry.removeSocket(socket.id);
 

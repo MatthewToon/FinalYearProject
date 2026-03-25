@@ -16,14 +16,16 @@ const sessionStore = require("../state/sessionStore");
 const stateMachine = require("../state/stateMachine");
 const { SESSION_STATES } = require("../config/constants");
 
-function createGame({ clientId, playerId, socketId }) {
+async function createGame({ clientId, playerId, socketId }) {
   const session = sessionFactory.createSession({
     creatorClientId: clientId,
     creatorPlayerId: playerId,
     creatorSocketId: socketId
   });
 
-  sessionStore.createSession(session);
+  console.log("[createGame] session created:", JSON.stringify(session, null, 2));
+
+  await sessionStore.createSession(session);
 
   return {
     ok: true,
@@ -31,8 +33,10 @@ function createGame({ clientId, playerId, socketId }) {
   };
 }
 
-function joinGame({ gameId, clientId, playerId, socketId }) {
-  const session = sessionStore.getSession(gameId);
+async function joinGame({ gameId, clientId, playerId, socketId }) {
+  const session = await sessionStore.getSession(gameId);
+
+  console.log("[joinGame BEFORE] players:", JSON.stringify(session.players, null, 2));
 
   if (!session) {
     return {
@@ -61,14 +65,14 @@ function joinGame({ gameId, clientId, playerId, socketId }) {
     connected: true
   };
 
-  sessionStore.saveSession(session);
+  await sessionStore.saveSession(session);
 
   let gameStarted = false;
 
   if (stateMachine.isReadyToStart(session)) {
     session.state = SESSION_STATES.IN_PROGRESS;
     session.turnColour = "white";
-    sessionStore.saveSession(session);
+    await sessionStore.saveSession(session);
     gameStarted = true;
   }
 

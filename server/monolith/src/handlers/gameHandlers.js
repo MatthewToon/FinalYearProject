@@ -18,6 +18,7 @@
  *
  * NOTE:
  * This file should NOT contain business logic — only orchestration.
+ * All service calls are asynchronous and must be awaited
  * ============================================================================
  */
 
@@ -84,7 +85,7 @@ function registerGameHandlers(io, socket) {
   // 6. Send initial STATE_SYNC
   // ==========================================================================
 
-  socket.on(MESSAGE_TYPES.GAME_CREATE, (rawMessage) => {
+  socket.on(MESSAGE_TYPES.GAME_CREATE, async (rawMessage) => {
     const parsed = parseEnvelope(rawMessage);
 
     if (!parsed.ok) {
@@ -104,7 +105,7 @@ function registerGameHandlers(io, socket) {
     );
     if (!connection) return;
 
-    const result = gameLifecycleService.createGame({
+    const result = await gameLifecycleService.createGame({
       clientId: connection.clientId,
       playerId: connection.playerId,
       socketId: socket.id
@@ -169,7 +170,7 @@ function registerGameHandlers(io, socket) {
   // 8. Broadcast updated STATE_SYNC to both players
   // ==========================================================================
 
-  socket.on(MESSAGE_TYPES.GAME_JOIN, (rawMessage) => {
+  socket.on(MESSAGE_TYPES.GAME_JOIN, async (rawMessage) => {
     const parsed = parseEnvelope(rawMessage);
 
     if (!parsed.ok) {
@@ -203,7 +204,7 @@ function registerGameHandlers(io, socket) {
       return;
     }
 
-    const result = gameLifecycleService.joinGame({
+    const result = await gameLifecycleService.joinGame({
       gameId,
       clientId: connection.clientId,
       playerId: connection.playerId,
@@ -288,7 +289,7 @@ function registerGameHandlers(io, socket) {
   //    - send MOVE_REJECTED or ERROR
   // ==========================================================================
 
-  socket.on(MESSAGE_TYPES.MOVE_SUBMIT, (rawMessage) => {
+  socket.on(MESSAGE_TYPES.MOVE_SUBMIT, async (rawMessage) => {
     const parsed = parseEnvelope(rawMessage);
 
     if (!parsed.ok) {
@@ -322,7 +323,7 @@ function registerGameHandlers(io, socket) {
       return;
     }
 
-    const result = moveService.applyMove({
+    const result = await moveService.applyMove({
       gameId,
       playerId: connection.playerId,
       expectedRevision,

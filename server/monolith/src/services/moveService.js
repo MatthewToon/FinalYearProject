@@ -19,8 +19,8 @@ const stateMachine = require("../state/stateMachine");
 const { parseUciMove } = require("../protocol/uci");
 const ERROR_CODES = require("../protocol/errorCodes");
 
-function applyMove({ gameId, playerId, expectedRevision, uci }) {
-  const session = sessionStore.getSession(gameId);
+async function applyMove({ gameId, playerId, expectedRevision, uci }) {
+  const session = await sessionStore.getSession(gameId);
 
   if (!session) {
     return {
@@ -133,7 +133,7 @@ if (!appliedMove) {
     createdAt: new Date().toISOString()
   });
 
-  sessionStore.saveSession(session);
+  await sessionStore.saveSession(session);
 
   return {
     ok: true,
