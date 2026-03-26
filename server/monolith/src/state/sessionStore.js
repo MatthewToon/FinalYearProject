@@ -9,7 +9,7 @@
  * - Reads prefer cache, with DB fallback if needed
  * - Socket-related data remains in-memory only (not persisted)
  *
- * Note: All DB operations are async — callers must use `await`.
+ * Note: All DB operations are async, callers must use `await`.
  */
 
 const { pool } = require("../config/database");
@@ -26,26 +26,70 @@ function mapRowToSession(row) {
     players: {
       white: row.white_player_id
         ? {
-            clientId: null,
-            playerId: row.white_player_id,
-            socketId: null,
-            connected: false
-          }
-        : null,
-      black: row.black_player_id
-        ? {
-            clientId: null,
-            playerId: row.black_player_id,
-            socketId: null,
-            connected: false
-          }
-        : null
-    },
+          clientId: row.white_client_id,
+          playerId: row.white_player_id,
+          socketId: null,
+          connected: false
+        }
+      : null,
+    black: row.black_player_id
+      ? {
+        clientId: row.black_client_id,
+        playerId: row.black_player_id,
+        socketId: null,
+        connected: false
+      }
+    : null
+  },
     result: row.result,
     moveHistory: [],
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+}
+
+function mapMoveRowsToMoveHistory(rows) {
+  return rows.map((row) => ({
+    uci: row.uci,
+    san: row.san,
+    from: null,
+    to: null,
+    piece: null,
+    promotion: null,
+    revision: row.revision_applied,
+    submittedBy: row.player_id,
+    createdAt: row.created_at
+  }));
+}
+
+async function getMoveHistoryForGame(gameId) {
+  const movesResult = await pool.query(
+    `
+      SELECT *
+      FROM moves
+      WHERE game_id = $1
+      ORDER BY revision_applied ASC
+    `,
+    [gameId]
+  );
+
+  return mapMoveRowsToMoveHistory(movesResult.rows);
+}
+
+async function loadSessionsFromDatabase() {
+  const result = await pool.query(`
+    SELECT *
+    FROM games
+    ORDER BY created_at ASC
+  `);
+
+  sessions.clear();
+
+  for (const row of result.rows) {
+    const session = mapRowToSession(row);
+    session.moveHistory = await getMoveHistoryForGame(row.game_id);
+    sessions.set(session.gameId, session);
+  }
 }
 
 async function createSession(session) {
@@ -61,11 +105,13 @@ async function createSession(session) {
         turn_colour,
         white_player_id,
         black_player_id,
+        white_client_id,
+        black_client_id,
         result,
         created_at,
         updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     `,
     [
       session.gameId,
@@ -75,6 +121,8 @@ async function createSession(session) {
       session.turnColour,
       session.players?.white?.playerId || null,
       session.players?.black?.playerId || null,
+      session.players?.white?.clientId || null,
+      session.players?.black?.clientId || null,
       session.result || null,
       session.createdAt || new Date().toISOString(),
       session.updatedAt
@@ -88,11 +136,8 @@ async function createSession(session) {
 async function getSession(gameId) {
   const cached = sessions.get(gameId);
   if (cached) {
-    console.log("[sessionStore] getSession from cache:", gameId);
     return cached;
   }
-
-  console.log("[sessionStore] getSession from database:", gameId);
 
   const result = await pool.query(
     `
@@ -108,9 +153,9 @@ async function getSession(gameId) {
   }
 
   const session = mapRowToSession(result.rows[0]);
-  console.log("[sessionStore] mapped DB session:", JSON.stringify(session, null, 2)); // Added for GAME_JOIN troubleshooting
-  sessions.set(session.gameId, session);
+  session.moveHistory = await getMoveHistoryForGame(gameId);
 
+  sessions.set(session.gameId, session);
   return session;
 }
 
@@ -127,8 +172,10 @@ async function saveSession(session) {
         turn_colour = $5,
         white_player_id = $6,
         black_player_id = $7,
-        result = $8,
-        updated_at = $9
+        white_client_id = $8,
+        black_client_id = $9,
+        result = $10,
+        updated_at = $11
       WHERE game_id = $1
     `,
     [
@@ -139,6 +186,8 @@ async function saveSession(session) {
       session.turnColour,
       session.players?.white?.playerId || null,
       session.players?.black?.playerId || null,
+      session.players?.white?.clientId || null,
+      session.players?.black?.clientId || null,
       session.result || null,
       session.updatedAt
     ]
@@ -171,5 +220,6 @@ module.exports = {
   getSession,
   saveSession,
   getSessionCount,
-  findSessionBySocketId
+  findSessionBySocketId,
+  loadSessionsFromDatabase
 };

@@ -1,4 +1,4 @@
-/**
+/*
  * Monolith server entry point.
  *
  * This file bootstraps the backend runtime by:
@@ -19,6 +19,7 @@ const env = require("./config/env");
 const pool = require("./persistence/db");
 const registerHandlers = require("./handlers/registerHandlers");
 const connectionRegistry = require("./connection/connectionRegistry");
+const sessionStore = require("./state/sessionStore"); // ✅ NEW
 
 const app = express();
 const server = http.createServer(app);
@@ -51,6 +52,18 @@ app.get("/health", async (req, res) => {
 
 registerHandlers(io);
 
-server.listen(env.port, () => {
-  console.log(`Monolith server listening on port ${env.port}`);
-});
+// Async startup with rehydration
+async function startServer() {
+  try {
+    await sessionStore.loadSessionsFromDatabase();
+
+    server.listen(env.port, () => {
+      console.log(`Monolith server listening on port ${env.port}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+}
+
+startServer();

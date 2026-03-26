@@ -23,8 +23,6 @@ async function createGame({ clientId, playerId, socketId }) {
     creatorSocketId: socketId
   });
 
-  console.log("[createGame] session created:", JSON.stringify(session, null, 2));
-
   await sessionStore.createSession(session);
 
   return {
@@ -35,8 +33,6 @@ async function createGame({ clientId, playerId, socketId }) {
 
 async function joinGame({ gameId, clientId, playerId, socketId }) {
   const session = await sessionStore.getSession(gameId);
-
-  console.log("[joinGame BEFORE] players:", JSON.stringify(session.players, null, 2));
 
   if (!session) {
     return {
@@ -84,7 +80,58 @@ async function joinGame({ gameId, clientId, playerId, socketId }) {
   };
 }
 
+async function resumeGame({ gameId, clientId, socketId }) {
+  const session = await sessionStore.getSession(gameId);
+
+  if (!session) {
+    return {
+      ok: false,
+      error: {
+        code: "GAME_NOT_FOUND",
+        message: "The requested game does not exist"
+      }
+    };
+  }
+
+  let player = null;
+  let colour = null;
+
+  if (session.players.white?.clientId === clientId) {
+    player = session.players.white;
+    colour = "white";
+  }
+
+  if (session.players.black?.clientId === clientId) {
+    player = session.players.black;
+    colour = "black";
+  }
+
+  if (!player) {
+    return {
+      ok: false,
+      error: {
+        code: "PLAYER_NOT_IN_GAME",
+        message: "Client is not part of this game"
+      }
+    };
+  }
+
+  // Reattach socket
+  player.socketId = socketId;
+  player.connected = true;
+
+  await sessionStore.saveSession(session);
+
+  return {
+    ok: true,
+    session,
+    assignedColour: colour,
+    reconnectedPlayerId: player.playerId
+  };
+}
+
 module.exports = {
   createGame,
-  joinGame
+  joinGame,
+  resumeGame
 };

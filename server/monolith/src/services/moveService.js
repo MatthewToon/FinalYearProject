@@ -18,6 +18,7 @@ const sessionStore = require("../state/sessionStore");
 const stateMachine = require("../state/stateMachine");
 const { parseUciMove } = require("../protocol/uci");
 const ERROR_CODES = require("../protocol/errorCodes");
+const { pool } = require("../config/database");
 
 async function applyMove({ gameId, playerId, expectedRevision, uci }) {
   const session = await sessionStore.getSession(gameId);
@@ -106,16 +107,16 @@ async function applyMove({ gameId, playerId, expectedRevision, uci }) {
     };
   }
 
-if (!appliedMove) {
-  return {
-    ok: false,
-    errorType: "MOVE_REJECTED",
-    error: {
-      code: ERROR_CODES.ILLEGAL_MOVE,
-      message: "The submitted move is not legal in the current position"
-    }
-  };
-}
+  if (!appliedMove) {
+    return {
+      ok: false,
+      errorType: "MOVE_REJECTED",
+      error: {
+        code: ERROR_CODES.ILLEGAL_MOVE,
+        message: "The submitted move is not legal in the current position"
+      }
+    };
+  }
 
   session.fen = chess.fen();
   session.turnColour = chess.turn() === "w" ? "white" : "black";
@@ -132,6 +133,28 @@ if (!appliedMove) {
     submittedBy: playerId,
     createdAt: new Date().toISOString()
   });
+
+  await pool.query(
+  `
+    INSERT INTO moves (
+      game_id,
+      revision_applied,
+      player_id,
+      uci,
+      san,
+      fen_after
+    )
+    VALUES ($1, $2, $3, $4, $5, $6)
+  `,
+  [
+    session.gameId,
+    session.revision,
+    playerId,
+    uci,
+    appliedMove.san,
+    session.fen
+  ]
+  );
 
   await sessionStore.saveSession(session);
 
