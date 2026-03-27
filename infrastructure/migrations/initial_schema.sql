@@ -7,10 +7,10 @@ CREATE TABLE games (
     white_player_id TEXT,
     black_player_id TEXT,
     result TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     white_client_id TEXT,
-    black_client_id TEXT;
+    black_client_id TEXT
 );
 
 CREATE TABLE moves (
