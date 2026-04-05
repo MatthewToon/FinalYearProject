@@ -34,6 +34,11 @@ function createSession({ creatorClientId, creatorPlayerId, creatorSocketId }) {
       black: null
     },
 
+    rematch: {
+      white: false,
+      black: false
+    },
+
     moveHistory: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()

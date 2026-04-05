@@ -1,16 +1,28 @@
 CREATE TABLE games (
     game_id UUID PRIMARY KEY,
+
+    -- Human-friendly join fields
+    room_name TEXT UNIQUE NOT NULL,
+    room_password TEXT NOT NULL,
+
     state TEXT NOT NULL,
     revision INTEGER NOT NULL CHECK (revision >= 0),
     fen TEXT NOT NULL,
     turn_colour TEXT,
+
     white_player_id TEXT,
     black_player_id TEXT,
-    result TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
     white_client_id TEXT,
-    black_client_id TEXT
+    black_client_id TEXT,
+
+    white_rematch_requested BOOLEAN NOT NULL DEFAULT FALSE,
+    black_rematch_requested BOOLEAN NOT NULL DEFAULT FALSE,
+
+    result TEXT,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE moves (

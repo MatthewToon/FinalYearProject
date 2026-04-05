@@ -10,6 +10,8 @@
  * - GAME_JOIN
  * - MOVE_SUBMIT
  * - GAME_RESUME
+ * - REMATCH_REQUEST
+ * - RESIGN
  *
  * Responsibilities:
  * - Validate incoming protocol envelope
@@ -18,7 +20,7 @@
  * - Emit protocol responses (success or error)
  *
  * NOTE:
- * This file should NOT contain business logic — only orchestration.
+ * This file should NOT contain business logic - only orchestration.
  * All service calls are asynchronous and must be awaited
  * ============================================================================
  */
@@ -72,18 +74,8 @@ function requireInitialisedConnection(socket, clientMsgId) {
  * Attaches all protocol handlers to a connected socket.
  */
 function registerGameHandlers(io, socket) {
-
   // ==========================================================================
   // HANDLER: GAME_CREATE
-  // ==========================================================================
-  //
-  // Flow:
-  // 1. Validate message format
-  // 2. Ensure connection initialised
-  // 3. Call lifecycle service (async)
-  // 4. Join socket to game room
-  // 5. Send GAME_CREATED
-  // 6. Send initial STATE_SYNC
   // ==========================================================================
 
   socket.on(MESSAGE_TYPES.GAME_CREATE, async (rawMessage) => {
@@ -106,10 +98,26 @@ function registerGameHandlers(io, socket) {
     );
     if (!connection) return;
 
+    const { roomName, roomPassword } = parsed.message.payload || {};
+
+    if (!roomName || !roomPassword) {
+      socket.emit(
+        MESSAGE_TYPES.ERROR,
+        createErrorMessage(
+          ERROR_CODES.INVALID_MESSAGE_FORMAT,
+          "GAME_CREATE requires payload.roomName and payload.roomPassword",
+          parsed.message.clientMsgId
+        )
+      );
+      return;
+    }
+
     const result = await gameLifecycleService.createGame({
       clientId: connection.clientId,
       playerId: connection.playerId,
-      socketId: socket.id
+      socketId: socket.id,
+      roomName,
+      roomPassword
     });
 
     if (!result.ok) {
@@ -125,12 +133,10 @@ function registerGameHandlers(io, socket) {
     }
 
     const session = result.session;
-    const roomName = broadcastService.getGameRoomName(session.gameId);
+    const roomChannelName = broadcastService.getGameRoomName(session.gameId);
 
-    // Join socket to game room
-    socket.join(roomName);
+    socket.join(roomChannelName);
 
-    // Send GAME_CREATED to creator
     broadcastService.sendToSocket(
       socket,
       MESSAGE_TYPES.GAME_CREATED,
@@ -138,13 +144,13 @@ function registerGameHandlers(io, socket) {
         MESSAGE_TYPES.GAME_CREATED,
         {
           gameId: session.gameId,
+          roomName: session.roomName,
           assignedColour: "white"
         },
         parsed.message.clientMsgId
       )
     );
 
-    // Send initial state snapshot
     broadcastService.sendToSocket(
       socket,
       MESSAGE_TYPES.STATE_SYNC,
@@ -158,17 +164,6 @@ function registerGameHandlers(io, socket) {
 
   // ==========================================================================
   // HANDLER: GAME_JOIN
-  // ==========================================================================
-  //
-  // Flow:
-  // 1. Validate message format
-  // 2. Ensure connection initialised
-  // 3. Validate payload (gameId)
-  // 4. Call lifecycle service (async)
-  // 5. Join socket to room
-  // 6. Send GAME_JOINED to joining player
-  // 7. If second player → broadcast GAME_START
-  // 8. Broadcast updated STATE_SYNC to both players
   // ==========================================================================
 
   socket.on(MESSAGE_TYPES.GAME_JOIN, async (rawMessage) => {
@@ -191,14 +186,14 @@ function registerGameHandlers(io, socket) {
     );
     if (!connection) return;
 
-    const gameId = parsed.message.payload?.gameId;
+    const { roomName, roomPassword } = parsed.message.payload || {};
 
-    if (!gameId) {
+    if (!roomName || !roomPassword) {
       socket.emit(
         MESSAGE_TYPES.ERROR,
         createErrorMessage(
           ERROR_CODES.INVALID_MESSAGE_FORMAT,
-          "GAME_JOIN requires payload.gameId",
+          "GAME_JOIN requires payload.roomName and payload.roomPassword",
           parsed.message.clientMsgId
         )
       );
@@ -206,7 +201,8 @@ function registerGameHandlers(io, socket) {
     }
 
     const result = await gameLifecycleService.joinGame({
-      gameId,
+      roomName,
+      roomPassword,
       clientId: connection.clientId,
       playerId: connection.playerId,
       socketId: socket.id
@@ -225,12 +221,10 @@ function registerGameHandlers(io, socket) {
     }
 
     const session = result.session;
-    const roomName = broadcastService.getGameRoomName(session.gameId);
+    const roomChannelName = broadcastService.getGameRoomName(session.gameId);
 
-    // Join socket to game room
-    socket.join(roomName);
+    socket.join(roomChannelName);
 
-    // Send GAME_JOINED to joining player
     broadcastService.sendToSocket(
       socket,
       MESSAGE_TYPES.GAME_JOINED,
@@ -238,13 +232,13 @@ function registerGameHandlers(io, socket) {
         MESSAGE_TYPES.GAME_JOINED,
         {
           gameId: session.gameId,
+          roomName: session.roomName,
           assignedColour: result.assignedColour
         },
         parsed.message.clientMsgId
       )
     );
 
-    // If game now ready → broadcast GAME_START
     if (result.gameStarted) {
       broadcastService.broadcastToGame(
         io,
@@ -261,7 +255,6 @@ function registerGameHandlers(io, socket) {
       );
     }
 
-    // Broadcast updated state to all players
     broadcastService.broadcastToGame(
       io,
       session.gameId,
@@ -276,18 +269,6 @@ function registerGameHandlers(io, socket) {
 
   // ==========================================================================
   // HANDLER: MOVE_SUBMIT
-  // ==========================================================================
-  //
-  // Flow:
-  // 1. Validate message format
-  // 2. Ensure connection initialised
-  // 3. Validate payload (gameId, revision, uci)
-  // 4. Call move service (async)
-  // 5. On success:
-  //    - send MOVE_ACCEPTED to submitting player
-  //    - broadcast STATE_UPDATE to all players
-  // 6. On failure:
-  //    - send MOVE_REJECTED or ERROR
   // ==========================================================================
 
   socket.on(MESSAGE_TYPES.MOVE_SUBMIT, async (rawMessage) => {
@@ -331,7 +312,6 @@ function registerGameHandlers(io, socket) {
       uci
     });
 
-    // Handle rejection
     if (!result.ok) {
       const messageType =
         result.errorType === "MOVE_REJECTED"
@@ -354,7 +334,6 @@ function registerGameHandlers(io, socket) {
 
     const session = result.session;
 
-    // Send MOVE_ACCEPTED to submitting player
     broadcastService.sendToSocket(
       socket,
       MESSAGE_TYPES.MOVE_ACCEPTED,
@@ -369,7 +348,6 @@ function registerGameHandlers(io, socket) {
       )
     );
 
-    // Broadcast updated state to all players
     broadcastService.broadcastToGame(
       io,
       session.gameId,
@@ -378,6 +356,7 @@ function registerGameHandlers(io, socket) {
         MESSAGE_TYPES.STATE_UPDATE,
         {
           gameId: session.gameId,
+          roomName: session.roomName,
           state: session.state,
           revision: session.revision,
           fen: session.fen,
@@ -393,17 +372,204 @@ function registerGameHandlers(io, socket) {
   });
 
   // ==========================================================================
-  // HANDLER: GAME_RESUME
+  // HANDLER: RESIGN
   // ==========================================================================
   //
   // Flow:
   // 1. Validate message format
   // 2. Ensure connection initialised
   // 3. Validate payload (gameId)
-  // 4. Call lifecycle service (async)
-  // 5. Join socket to game room
-  // 6. Send GAME_RESUMED
-  // 7. Send refreshed STATE_SYNC
+  // 4. Call lifecycle service
+  // 5. Broadcast GAME_CONCLUDED
+  // 6. Broadcast refreshed STATE_SYNC
+  // ==========================================================================
+
+  socket.on(MESSAGE_TYPES.RESIGN, async (rawMessage) => {
+    const parsed = parseEnvelope(rawMessage);
+
+    if (!parsed.ok) {
+      socket.emit(
+        MESSAGE_TYPES.ERROR,
+        createErrorMessage(
+          ERROR_CODES.INVALID_MESSAGE_FORMAT,
+          parsed.error.message
+        )
+      );
+      return;
+    }
+
+    const connection = requireInitialisedConnection(
+      socket,
+      parsed.message.clientMsgId
+    );
+    if (!connection) return;
+
+    const gameId = parsed.message.payload?.gameId;
+
+    if (!gameId) {
+      socket.emit(
+        MESSAGE_TYPES.ERROR,
+        createErrorMessage(
+          ERROR_CODES.INVALID_MESSAGE_FORMAT,
+          "RESIGN requires payload.gameId",
+          parsed.message.clientMsgId
+        )
+      );
+      return;
+    }
+
+    const result = await gameLifecycleService.resignGame({
+      gameId,
+      playerId: connection.playerId
+    });
+
+    if (!result.ok) {
+      socket.emit(
+        MESSAGE_TYPES.ERROR,
+        createErrorMessage(
+          result.error.code,
+          result.error.message,
+          parsed.message.clientMsgId
+        )
+      );
+      return;
+    }
+
+    const session = result.session;
+
+    broadcastService.broadcastToGame(
+      io,
+      session.gameId,
+      MESSAGE_TYPES.GAME_CONCLUDED,
+      createServerMessage(
+        MESSAGE_TYPES.GAME_CONCLUDED,
+        {
+          gameId: session.gameId,
+          result: session.result,
+          reason: "RESIGNATION",
+          winner:
+            session.result === "WHITE_WIN_RESIGNATION" ? "white" : "black",
+          fen: session.fen,
+          revision: session.revision
+        },
+        parsed.message.clientMsgId
+      )
+    );
+
+    broadcastService.broadcastToGame(
+      io,
+      session.gameId,
+      MESSAGE_TYPES.STATE_SYNC,
+      createServerMessage(
+        MESSAGE_TYPES.STATE_SYNC,
+        syncService.buildStateSyncPayload(session),
+        parsed.message.clientMsgId
+      )
+    );
+  });
+
+  // ==========================================================================
+  // HANDLER: REMATCH_REQUEST
+  // ==========================================================================
+
+  socket.on(MESSAGE_TYPES.REMATCH_REQUEST, async (rawMessage) => {
+    const parsed = parseEnvelope(rawMessage);
+
+    if (!parsed.ok) {
+      socket.emit(
+        MESSAGE_TYPES.ERROR,
+        createErrorMessage(
+          ERROR_CODES.INVALID_MESSAGE_FORMAT,
+          parsed.error.message
+        )
+      );
+      return;
+    }
+
+    const connection = requireInitialisedConnection(
+      socket,
+      parsed.message.clientMsgId
+    );
+    if (!connection) return;
+
+    const gameId = parsed.message.payload?.gameId;
+
+    if (!gameId) {
+      socket.emit(
+        MESSAGE_TYPES.ERROR,
+        createErrorMessage(
+          ERROR_CODES.INVALID_MESSAGE_FORMAT,
+          "REMATCH_REQUEST requires payload.gameId",
+          parsed.message.clientMsgId
+        )
+      );
+      return;
+    }
+
+    const result = await gameLifecycleService.requestRematch({
+      gameId,
+      playerId: connection.playerId
+    });
+
+    if (!result.ok) {
+      socket.emit(
+        MESSAGE_TYPES.ERROR,
+        createErrorMessage(
+          result.error.code,
+          result.error.message,
+          parsed.message.clientMsgId
+        )
+      );
+      return;
+    }
+
+    const session = result.session;
+
+    if (!result.rematchStarted) {
+      broadcastService.broadcastToGame(
+        io,
+        session.gameId,
+        MESSAGE_TYPES.REMATCH_STATUS,
+        createServerMessage(
+          MESSAGE_TYPES.REMATCH_STATUS,
+          {
+            gameId: session.gameId,
+            rematch: session.rematch
+          },
+          parsed.message.clientMsgId
+        )
+      );
+      return;
+    }
+
+    broadcastService.broadcastToGame(
+      io,
+      session.gameId,
+      MESSAGE_TYPES.REMATCH_START,
+      createServerMessage(
+        MESSAGE_TYPES.REMATCH_START,
+        {
+          gameId: session.gameId,
+          roomName: session.roomName
+        },
+        parsed.message.clientMsgId
+      )
+    );
+
+    broadcastService.broadcastToGame(
+      io,
+      session.gameId,
+      MESSAGE_TYPES.STATE_SYNC,
+      createServerMessage(
+        MESSAGE_TYPES.STATE_SYNC,
+        syncService.buildStateSyncPayload(session),
+        parsed.message.clientMsgId
+      )
+    );
+  });
+
+  // ==========================================================================
+  // HANDLER: GAME_RESUME
   // ==========================================================================
 
   socket.on(MESSAGE_TYPES.GAME_RESUME, async (rawMessage) => {
@@ -418,7 +584,7 @@ function registerGameHandlers(io, socket) {
         )
       );
       return;
-   }
+    }
 
     const connection = requireInitialisedConnection(
       socket,
@@ -459,22 +625,20 @@ function registerGameHandlers(io, socket) {
     }
 
     const session = result.session;
-    const roomName = broadcastService.getGameRoomName(session.gameId);
+    const roomChannelName = broadcastService.getGameRoomName(session.gameId);
 
-    socket.join(roomName);
+    socket.join(roomChannelName);
 
-    // Notify opponent ONLY (not the reconnecting player)
     const reconnectedPlayerId = result.reconnectedPlayerId;
     const opponent =
       session.players.white?.playerId === reconnectedPlayerId
         ? session.players.black
         : session.players.white;
 
-    // If opponent is connected → notify them directly
     if (opponent && opponent.socketId) {
       const opponentSocket = io.sockets.sockets.get(opponent.socketId);
 
-     if (opponentSocket) {
+      if (opponentSocket) {
         broadcastService.sendToSocket(
           opponentSocket,
           MESSAGE_TYPES.PLAYER_RECONNECTED,
@@ -490,7 +654,6 @@ function registerGameHandlers(io, socket) {
       }
     }
 
-    // Send GAME_RESUMED to reconnecting player
     broadcastService.sendToSocket(
       socket,
       MESSAGE_TYPES.GAME_RESUMED,
@@ -504,7 +667,6 @@ function registerGameHandlers(io, socket) {
       )
     );
 
-    // Send refreshed state snapshot
     broadcastService.sendToSocket(
       socket,
       MESSAGE_TYPES.STATE_SYNC,
