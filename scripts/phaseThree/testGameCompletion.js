@@ -1,9 +1,16 @@
+/*
+ * Script: testGameCompletion
+ *
+ * This is a small development/testing script used during the project.
+ * Read the code below to see which server event or workflow it exercises.
+ */
+
 const { randomUUID } = require("crypto");
 const { Chess } = require("../../server/monolith/node_modules/chess.js");
 
 const sessionStore = require("../../server/monolith/src/state/sessionStore");
 const moveService = require("../../server/monolith/src/services/moveService");
-const { pool } = require("../../server/monolith/src/config/database");
+const { pool } = require("../../server/monolith/src/persistence/db");
 const { SESSION_STATES } = require("../../server/monolith/src/config/constants");
 
 function getTurnColourFromFen(fen) {

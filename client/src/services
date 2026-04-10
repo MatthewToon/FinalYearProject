@@ -1,0 +1,6 @@
+/*
+ * Client services placeholder.
+ *
+ * This file seems to exist as a marker for a future services folder/module.
+ * The current client keeps its socket logic directly inside App.jsx.
+ */

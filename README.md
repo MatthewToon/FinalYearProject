@@ -89,3 +89,26 @@ The system is being implemented in two versions:
         Password: chess
 2. Redis also started through Docker and is exposed on:
     localhost:6379
+
+# Render Deployment
+This repository now includes a basic Render blueprint at [render.yaml](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/render.yaml) for deploying the current monolith setup.
+
+It creates:
+- a Node web service for the monolith backend
+- a static site for the React client
+- a Render Postgres database
+
+## Render Steps
+1. Push the repository to GitHub.
+2. In Render, choose `New` then `Blueprint`.
+3. Connect the GitHub repository and select this project.
+4. Render will detect [render.yaml](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/render.yaml) and show the three resources it will create.
+5. During setup, enter a value for `VITE_SERVER_URL` on the static site.
+   Use the public Render URL of the monolith service, for example:
+   `https://fyp-chess-monolith.onrender.com`
+6. Complete the deployment and wait for the services to finish building.
+
+## Important Notes
+- The client uses `VITE_SERVER_URL`, so the browser must be pointed at the monolith's public Render URL.
+- `CLIENT_ORIGIN` is currently set to `*` in the Render blueprint to keep deployment simple. You can tighten that later to the exact client URL if you want.
+- The current Render setup is for the monolith only. The decomposed version can be added later as a separate service set once it is ready.

@@ -3,12 +3,12 @@
  *
  * This service contains the application logic for creating and managing game
  * sessions. At this stage, it supports:
- * - GAME_CREATE
- * - GAME_JOIN
- * - GAME_RESUME
- * - REMATCH_REQUEST
- * - RESIGN
- * - internal transition from WAITING_FOR_PLAYERS to IN_PROGRESS
+ * GAME_CREATE
+ * GAME_JOIN
+ * GAME_RESUME
+ * REMATCH_REQUEST
+ * RESIGN
+ * internal transition from WAITING_FOR_PLAYERS to IN_PROGRESS
  *
  * It does not emit socket events directly. Instead, it returns structured
  * results to the handler layer, which is responsible for protocol responses.
@@ -18,7 +18,7 @@ const sessionFactory = require("../state/sessionFactory");
 const sessionStore = require("../state/sessionStore");
 const stateMachine = require("../state/stateMachine");
 const { SESSION_STATES, START_FEN } = require("../config/constants");
-const { pool } = require("../config/database");
+const { pool } = require("../persistence/db");
 
 async function createGame({ clientId, playerId, socketId, roomName, roomPassword }) {
   if (!roomName || !roomPassword) {

@@ -1,4 +1,4 @@
-/**
+/*
  * Session state transition and validation helpers.
  *
  * This file contains small, focused rules for deciding whether a game

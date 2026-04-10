@@ -18,20 +18,24 @@ const sessionStore = require("../state/sessionStore");
 const stateMachine = require("../state/stateMachine");
 const { parseUciMove } = require("../protocol/uci");
 const ERROR_CODES = require("../protocol/errorCodes");
-const { pool } = require("../config/database");
+const { pool } = require("../persistence/db");
 const { SESSION_STATES, START_FEN } = require("../config/constants");
 
+function logMove(details) {
+  console.log("[moveService]", details);
+}
+
 function buildChessFromSessionHistory(session) {
-  
   const startingFen = session.initialFen || START_FEN;
   const chess = new Chess(startingFen);
 
-  for (const move of session.moveHistory) {
+  for (let i = 0; i < session.moveHistory.length; i += 1) {
+    const move = session.moveHistory[i];
     const applied = chess.move(move.uci, { sloppy: true });
 
     if (!applied) {
       throw new Error(
-        `Failed to rebuild chess history for game ${session.gameId} at move ${move.uci}`
+        `Failed to rebuild chess history for game ${session.gameId} at move index ${i} (${move.uci})`
       );
     }
   }
@@ -42,7 +46,6 @@ function buildChessFromSessionHistory(session) {
 function applyGameCompletionState(session, chess) {
   if (chess.isCheckmate()) {
     session.state = SESSION_STATES.FINISHED;
-
     const winner = chess.turn() === "w" ? "black" : "white";
     session.result = `${winner.toUpperCase()}_WIN_CHECKMATE`;
     session.turnColour = null;
@@ -78,180 +81,309 @@ function applyGameCompletionState(session, chess) {
 }
 
 async function applyMove({ gameId, playerId, expectedRevision, uci }) {
-  const session = await sessionStore.getSession(gameId);
-
-  if (!session) {
-    return {
-      ok: false,
-      errorType: "ERROR",
-      error: {
-        code: ERROR_CODES.GAME_NOT_FOUND,
-        message: "The requested game does not exist"
-      }
-    };
-  }
-
-  if (!stateMachine.canSubmitMove(session)) {
-    return {
-      ok: false,
-      errorType: "ERROR",
-      error: {
-        code: ERROR_CODES.INVALID_GAME_STATE,
-        message: "Moves can only be submitted while the game is in progress"
-      }
-    };
-  }
-
-  const playerColour = stateMachine.getPlayerColour(session, playerId);
-
-  if (!playerColour) {
-    return {
-      ok: false,
-      errorType: "ERROR",
-      error: {
-        code: ERROR_CODES.PLAYER_NOT_IN_GAME,
-        message: "The submitting player is not part of this game"
-      }
-    };
-  }
-
-  if (expectedRevision !== session.revision) {
-    return {
-      ok: false,
-      errorType: "MOVE_REJECTED",
-      error: {
-        code: ERROR_CODES.STALE_REVISION,
-        message: `Expected revision ${session.revision}, received ${expectedRevision}`
-      }
-    };
-  }
-
-  if (!stateMachine.isPlayersTurn(session, playerId)) {
-    return {
-      ok: false,
-      errorType: "MOVE_REJECTED",
-      error: {
-        code: ERROR_CODES.NOT_YOUR_TURN,
-        message: `It is currently ${session.turnColour}'s turn`
-      }
-    };
-  }
-
-  const parsedMove = parseUciMove(uci);
-
-  if (!parsedMove.ok) {
-    return {
-      ok: false,
-      errorType: "ERROR",
-      error: parsedMove.error
-    };
-  }
-
-  let chess;
-
   try {
-    chess = buildChessFromSessionHistory(session);
-  } catch (error) {
-    return {
-      ok: false,
-      errorType: "ERROR",
-      error: {
-        code: ERROR_CODES.INVALID_GAME_STATE,
-        message: "Failed to reconstruct game history for move validation"
-      }
-    };
-  }
-
-  if (chess.fen() !== session.fen) {
-    return {
-      ok: false,
-      errorType: "ERROR",
-      error: {
-        code: ERROR_CODES.INVALID_GAME_STATE,
-        message: "Persisted session state does not match reconstructed move history"
-      }
-    };
-  }
-
-  let appliedMove;
-
-  try {
-    appliedMove = chess.move(parsedMove.move);
-  } catch (error) {
-    return {
-      ok: false,
-      errorType: "MOVE_REJECTED",
-      error: {
-        code: ERROR_CODES.ILLEGAL_MOVE,
-        message: "The submitted move is not legal in the current position"
-      }
-    };
-  }
-
-  if (!appliedMove) {
-    return {
-      ok: false,
-      errorType: "MOVE_REJECTED",
-      error: {
-        code: ERROR_CODES.ILLEGAL_MOVE,
-        message: "The submitted move is not legal in the current position"
-      }
-    };
-  }
-
-  session.fen = chess.fen();
-  session.turnColour = chess.turn() === "w" ? "white" : "black";
-  session.revision += 1;
-
-  applyGameCompletionState(session, chess);
-
-  session.moveHistory.push({
-    uci,
-    san: appliedMove.san,
-    from: appliedMove.from,
-    to: appliedMove.to,
-    piece: appliedMove.piece,
-    promotion: appliedMove.promotion || null,
-    revision: session.revision,
-    submittedBy: playerId,
-    createdAt: new Date().toISOString()
-  });
-
-  await pool.query(
-    `
-      INSERT INTO moves (
-        game_id,
-        revision_applied,
-        player_id,
-        uci,
-        san,
-        fen_after
-      )
-      VALUES ($1, $2, $3, $4, $5, $6)
-    `,
-    [
-      session.gameId,
-      session.revision,
+    logMove({
+      stage: "received",
+      gameId,
       playerId,
-      uci,
-      appliedMove.san,
-      session.fen
-    ]
-  );
+      expectedRevision,
+      uci
+    });
 
-  await sessionStore.saveSession(session);
+    const session = await sessionStore.getSession(gameId);
 
-  return {
-    ok: true,
-    session,
-    appliedMove: {
+    if (!session) {
+      return {
+        ok: false,
+        errorType: "ERROR",
+        error: {
+          code: ERROR_CODES.GAME_NOT_FOUND,
+          message: "The requested game does not exist"
+        }
+      };
+    }
+
+    logMove({
+      stage: "session_loaded",
+      gameId,
+      playerId,
+      revision: session.revision,
+      state: session.state,
+      turnColour: session.turnColour,
+      result: session.result,
+      fen: session.fen,
+      moveHistoryLength: session.moveHistory.length
+    });
+
+    if (!stateMachine.canSubmitMove(session)) {
+      return {
+        ok: false,
+        errorType: "ERROR",
+        error: {
+          code: ERROR_CODES.INVALID_GAME_STATE,
+          message: "Moves can only be submitted while the game is in progress"
+        }
+      };
+    }
+
+    const playerColour = stateMachine.getPlayerColour(session, playerId);
+
+    if (!playerColour) {
+      return {
+        ok: false,
+        errorType: "ERROR",
+        error: {
+          code: ERROR_CODES.PLAYER_NOT_IN_GAME,
+          message: "The submitting player is not part of this game"
+        }
+      };
+    }
+
+    if (expectedRevision !== session.revision) {
+      return {
+        ok: false,
+        errorType: "MOVE_REJECTED",
+        error: {
+          code: ERROR_CODES.STALE_REVISION,
+          message: `Expected revision ${session.revision}, received ${expectedRevision}`
+        }
+      };
+    }
+
+    if (!stateMachine.isPlayersTurn(session, playerId)) {
+      return {
+        ok: false,
+        errorType: "MOVE_REJECTED",
+        error: {
+          code: ERROR_CODES.NOT_YOUR_TURN,
+          message: `It is currently ${session.turnColour}'s turn`
+        }
+      };
+    }
+
+    const parsedMove = parseUciMove(uci);
+
+    if (!parsedMove.ok) {
+      return {
+        ok: false,
+        errorType: "ERROR",
+        error: parsedMove.error
+      };
+    }
+
+    let chess;
+
+    try {
+      chess = buildChessFromSessionHistory(session);
+    } catch (error) {
+      console.error("[moveService] Failed to rebuild move history:", error);
+
+      return {
+        ok: false,
+        errorType: "ERROR",
+        error: {
+          code: ERROR_CODES.INVALID_GAME_STATE,
+          message: "Failed to reconstruct game history for move validation"
+        }
+      };
+    }
+
+    if (chess.fen() !== session.fen) {
+      logMove({
+        stage: "fen_mismatch",
+        gameId,
+        expectedFen: session.fen,
+        reconstructedFen: chess.fen()
+      });
+
+      return {
+        ok: false,
+        errorType: "ERROR",
+        error: {
+          code: ERROR_CODES.INVALID_GAME_STATE,
+          message: "Persisted session state does not match reconstructed move history"
+        }
+      };
+    }
+
+    let appliedMove;
+
+    try {
+      appliedMove = chess.move(parsedMove.move);
+    } catch (error) {
+      logMove({
+        stage: "illegal_move_exception",
+        gameId,
+        uci,
+        parsedMove: parsedMove.move,
+        error: error.message
+      });
+
+      return {
+        ok: false,
+        errorType: "MOVE_REJECTED",
+        error: {
+          code: ERROR_CODES.ILLEGAL_MOVE,
+          message: "The submitted move is not legal in the current position"
+        }
+      };
+    }
+
+    if (!appliedMove) {
+      logMove({
+        stage: "illegal_move_null",
+        gameId,
+        uci,
+        parsedMove: parsedMove.move
+      });
+
+      return {
+        ok: false,
+        errorType: "MOVE_REJECTED",
+        error: {
+          code: ERROR_CODES.ILLEGAL_MOVE,
+          message: "The submitted move is not legal in the current position"
+        }
+      };
+    }
+
+    logMove({
+      stage: "move_applied_in_memory",
+      gameId,
       uci,
       san: appliedMove.san,
       from: appliedMove.from,
       to: appliedMove.to,
-      promotion: appliedMove.promotion || null
+      previousRevision: session.revision,
+      previousFen: session.fen
+    });
+
+    session.fen = chess.fen();
+    session.turnColour = chess.turn() === "w" ? "white" : "black";
+    session.revision += 1;
+
+    applyGameCompletionState(session, chess);
+
+    session.moveHistory.push({
+      uci,
+      san: appliedMove.san,
+      from: appliedMove.from,
+      to: appliedMove.to,
+      piece: appliedMove.piece,
+      promotion: appliedMove.promotion || null,
+      revision: session.revision,
+      submittedBy: playerId,
+      createdAt: new Date().toISOString()
+    });
+
+    logMove({
+      stage: "session_updated",
+      gameId,
+      revision: session.revision,
+      state: session.state,
+      result: session.result,
+      turnColour: session.turnColour,
+      fen: session.fen
+    });
+
+    try {
+      await pool.query(
+        `
+          INSERT INTO moves (
+            game_id,
+            revision_applied,
+            player_id,
+            uci,
+            san,
+            fen_after
+          )
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        [
+          session.gameId,
+          session.revision,
+          playerId,
+          uci,
+          appliedMove.san,
+          session.fen
+        ]
+      );
+    } catch (error) {
+      console.error("[moveService] Failed to persist move row:", {
+        gameId,
+        uci,
+        revision: session.revision,
+        error
+      });
+
+      return {
+        ok: false,
+        errorType: "ERROR",
+        error: {
+          code: ERROR_CODES.INTERNAL_ERROR,
+          message: "Failed to persist move history"
+        }
+      };
     }
-  };
+
+    try {
+      await sessionStore.saveSession(session);
+    } catch (error) {
+      console.error("[moveService] Failed to persist session state:", {
+        gameId,
+        uci,
+        revision: session.revision,
+        error
+      });
+
+      return {
+        ok: false,
+        errorType: "ERROR",
+        error: {
+          code: ERROR_CODES.INTERNAL_ERROR,
+          message: "Failed to persist updated game state"
+        }
+      };
+    }
+
+    logMove({
+      stage: "completed",
+      gameId,
+      revision: session.revision,
+      state: session.state,
+      result: session.result,
+      fen: session.fen
+    });
+
+    return {
+      ok: true,
+      session,
+      appliedMove: {
+        uci,
+        san: appliedMove.san,
+        from: appliedMove.from,
+        to: appliedMove.to,
+        promotion: appliedMove.promotion || null
+      }
+    };
+  } catch (error) {
+    console.error("[moveService] Unhandled exception in applyMove:", {
+      gameId,
+      playerId,
+      expectedRevision,
+      uci,
+      error
+    });
+
+    return {
+      ok: false,
+      errorType: "ERROR",
+      error: {
+        code: ERROR_CODES.INTERNAL_ERROR,
+        message: "Unexpected failure while applying move"
+      }
+    };
+  }
 }
 
 module.exports = {

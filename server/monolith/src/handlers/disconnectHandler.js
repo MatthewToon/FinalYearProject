@@ -1,4 +1,4 @@
-/**
+/*
  * Disconnect handler.
  *
  * This handler responds to Socket.IO disconnect events. It removes the socket
@@ -13,16 +13,24 @@ const connectionRegistry = require("../connection/connectionRegistry");
 const disconnectService = require("../services/disconnectService");
 const broadcastService = require("../services/broadcastService");
 const syncService = require("../services/syncService");
+const {
+  recordSocketMessage,
+  recordOperationDuration
+} = require("../metrics/latency");
 
 function registerDisconnectHandler(io, socket) {
   socket.on("disconnect", async () => {
     console.log(`Socket disconnected: ${socket.id}`);
+    const startedAtMs = Date.now();
+    recordSocketMessage("DISCONNECT", "received");
 
     const result = await disconnectService.handleDisconnect(socket.id);
 
     connectionRegistry.removeSocket(socket.id);
 
     if (!result.session || !result.disconnectedPlayerId) {
+      recordSocketMessage("DISCONNECT", "accepted");
+      recordOperationDuration("disconnect", startedAtMs);
       return;
     }
 
@@ -47,6 +55,8 @@ function registerDisconnectHandler(io, socket) {
         syncService.buildStateSyncPayload(session)
       )
     );
+    recordSocketMessage("DISCONNECT", "accepted");
+    recordOperationDuration("disconnect", startedAtMs);
   });
 }
 

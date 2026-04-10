@@ -1,6 +1,31 @@
+/*
+ * Main client application.
+ *
+ * This React component is the whole browser-side chess app for now.
+ * It:
+ * - creates or restores the browser's player identity
+ * - opens the Socket.IO connection to the backend
+ * - listens for server events such as room creation, state sync, and move updates
+ * - renders the menu, forms, board, and move history
+ *
+ * The browser is not the source of truth for the game.
+ * The server is authoritative, and the client mainly sends requests and displays
+ * the latest state sent back from the backend.
+ */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { Chessboard } from "react-chessboard";
+
+const RESULT_LABELS = {
+  WHITE_WIN_CHECKMATE: "White wins by checkmate",
+  BLACK_WIN_CHECKMATE: "Black wins by checkmate",
+  WHITE_WIN_RESIGNATION: "White wins by resignation",
+  BLACK_WIN_RESIGNATION: "Black wins by resignation",
+  DRAW_STALEMATE: "Draw by stalemate",
+  DRAW_INSUFFICIENT_MATERIAL: "Draw (insufficient material)",
+  DRAW_THREEFOLD_REPETITION: "Draw by threefold repetition",
+  DRAW: "Draw (fifty-move rule or general draw)"
+};
 
 function createMessage(type, clientMsgId, payload) {
   return {
@@ -42,6 +67,7 @@ function getSavedGameInfo() {
 
 function App() {
   const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
+  // These values are created once per browser tab and reused after refreshes.
   const identity = useMemo(() => getOrCreateTabIdentity(), []);
   const savedGameInfo = useMemo(() => getSavedGameInfo(), []);
 
@@ -57,27 +83,14 @@ function App() {
   const [roomPassword, setRoomPassword] = useState("");
   const [gameId, setGameId] = useState(savedGameInfo.lastGameId || "");
 
-  const [lastEvent, setLastEvent] = useState("Connecting...");
   const [errorMessage, setErrorMessage] = useState("");
+  // This is the latest authoritative game snapshot received from the server.
   const [sessionState, setSessionState] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [bannerMessage, setBannerMessage] = useState("");
 
   function nextMsgId() {
     msgCounterRef.current += 1;
     return `client-msg-${msgCounterRef.current}`;
-  }
-
-  function appendMessage(direction, type, payload) {
-    setMessages((prev) => [
-      {
-        id: `${Date.now()}-${Math.random()}`,
-        direction,
-        type,
-        payload
-      },
-      ...prev
-    ]);
   }
 
   function showBanner(message) {
@@ -104,7 +117,57 @@ function App() {
     }
   }
 
+  function handleInboundMessage(type, msg, options = {}) {
+    const {
+      clearError = true,
+      syncState = false,
+      saveGame = false,
+      savedGameInfo = null,
+      nextView = null,
+      banner = "",
+      error = ""
+    } = options;
+
+    if (clearError) {
+      setErrorMessage("");
+    }
+
+    if (error) {
+      setErrorMessage(error);
+    }
+
+    // Some events carry a full game snapshot that should replace the current UI state.
+    if (syncState) {
+      setSessionState(msg?.payload || null);
+    }
+
+    // Save these values so the user can resume a game later after refresh/disconnect.
+    if (saveGame || savedGameInfo) {
+      saveLastGame(
+        savedGameInfo?.gameId ?? msg?.payload?.gameId ?? "",
+        savedGameInfo?.roomName ?? msg?.payload?.roomName ?? ""
+      );
+    }
+
+    if (banner) {
+      showBanner(banner);
+    }
+
+    if (nextView) {
+      setView(nextView);
+    }
+  }
+
+  function emitSocketMessage(type, payload) {
+    if (!socketRef.current) return;
+
+    // Every outgoing protocol message gets a simple client-generated ID.
+    const message = createMessage(type, nextMsgId(), payload);
+    socketRef.current.emit(type, message);
+  }
+
   useEffect(() => {
+    // Open one long-lived realtime connection to the backend.
     const socket = io(serverUrl, {
       transports: ["websocket"]
     });
@@ -113,22 +176,20 @@ function App() {
 
     socket.on("connect", () => {
       setConnected(true);
-      setLastEvent(`Connected: ${socket.id}`);
       setErrorMessage("");
 
+      // HELLO is the first protocol message and tells the server who this tab is.
       const helloMessage = createMessage("HELLO", nextMsgId(), {
         clientId: identity.clientId,
         playerId: identity.playerId
       });
 
-      appendMessage("out", "HELLO", helloMessage);
       socket.emit("HELLO", helloMessage);
     });
 
     socket.on("disconnect", (reason) => {
       setConnected(false);
       setInitialised(false);
-      setLastEvent(`Disconnected: ${reason || "unknown reason"}`);
 
       if (sessionState?.gameId) {
         setErrorMessage(
@@ -141,119 +202,90 @@ function App() {
 
     socket.on("WELCOME", (msg) => {
       setInitialised(true);
-      setLastEvent("WELCOME received");
-      setErrorMessage("");
-      appendMessage("in", "WELCOME", msg);
+      handleInboundMessage("WELCOME", msg);
     });
 
     socket.on("GAME_CREATED", (msg) => {
-      setLastEvent("GAME_CREATED received");
-      setErrorMessage("");
-      appendMessage("in", "GAME_CREATED", msg);
-
-      const nextGameId = msg?.payload?.gameId || "";
       const nextRoomName = msg?.payload?.roomName || "";
-
-      saveLastGame(nextGameId, nextRoomName);
-      showBanner(`Room '${nextRoomName}' created. Waiting for second player...`);
-      setView("game");
+      handleInboundMessage("GAME_CREATED", msg, {
+        saveGame: true,
+        nextView: "game",
+        banner: `Room '${nextRoomName}' created. Waiting for second player...`
+      });
     });
 
     socket.on("GAME_JOINED", (msg) => {
-      setLastEvent("GAME_JOINED received");
-      setErrorMessage("");
-      appendMessage("in", "GAME_JOINED", msg);
-
-      const nextGameId = msg?.payload?.gameId || "";
       const nextRoomName = msg?.payload?.roomName || "";
-
-      saveLastGame(nextGameId, nextRoomName);
-      showBanner(`Joined room '${nextRoomName}' successfully.`);
-      setView("game");
+      handleInboundMessage("GAME_JOINED", msg, {
+        saveGame: true,
+        nextView: "game",
+        banner: `Joined room '${nextRoomName}' successfully.`
+      });
     });
 
     socket.on("GAME_RESUMED", (msg) => {
-      setLastEvent("GAME_RESUMED received");
-      setErrorMessage("");
-      appendMessage("in", "GAME_RESUMED", msg);
-
-      const nextGameId = msg?.payload?.gameId || gameId;
-      saveLastGame(nextGameId, roomName);
+      handleInboundMessage("GAME_RESUMED", msg, {
+        savedGameInfo: {
+          gameId: msg?.payload?.gameId || gameId,
+          roomName
+        },
+        nextView: "game"
+      });
       showBanner("Game resumed successfully.");
-      setView("game");
     });
 
     socket.on("GAME_START", () => {
-      setLastEvent("GAME_START received");
       setErrorMessage("");
       showBanner("Second player joined. The game has started.");
       setView("game");
     });
 
     socket.on("STATE_SYNC", (msg) => {
-      setLastEvent("STATE_SYNC received");
-      setErrorMessage("");
-      appendMessage("in", "STATE_SYNC", msg);
-      setSessionState(msg.payload || null);
-
-      const nextGameId = msg?.payload?.gameId || "";
-      const nextRoomName = msg?.payload?.roomName || "";
-
-      saveLastGame(nextGameId, nextRoomName);
-      setView("game");
+      handleInboundMessage("STATE_SYNC", msg, {
+        syncState: true,
+        saveGame: true,
+        nextView: "game"
+      });
     });
 
     socket.on("STATE_UPDATE", (msg) => {
-      setLastEvent("STATE_UPDATE received");
-      setErrorMessage("");
-      appendMessage("in", "STATE_UPDATE", msg);
-      setSessionState(msg.payload || null);
-
-      const nextGameId = msg?.payload?.gameId || "";
-      const nextRoomName = msg?.payload?.roomName || "";
-
-      saveLastGame(nextGameId, nextRoomName);
-      setView("game");
+      handleInboundMessage("STATE_UPDATE", msg, {
+        syncState: true,
+        saveGame: true,
+        nextView: "game"
+      });
     });
 
     socket.on("GAME_CONCLUDED", (msg) => {
-      setLastEvent("GAME_CONCLUDED received");
-      setErrorMessage("");
-      appendMessage("in", "GAME_CONCLUDED", msg);
-
       const result = msg?.payload?.result;
-      if (result) {
-        showBanner(`Game concluded: ${formatResult(result)}`);
-      } else {
-        showBanner("Game concluded.");
-      }
+      handleInboundMessage("GAME_CONCLUDED", msg, {
+        banner: result ? `Game concluded: ${formatResult(result)}` : "Game concluded."
+      });
     });
 
     socket.on("MOVE_ACCEPTED", (msg) => {
-      setLastEvent("MOVE_ACCEPTED received");
-      setErrorMessage("");
-      appendMessage("in", "MOVE_ACCEPTED", msg);
+      handleInboundMessage("MOVE_ACCEPTED", msg);
     });
 
     socket.on("MOVE_REJECTED", (msg) => {
-      setLastEvent("MOVE_REJECTED received");
-      appendMessage("in", "MOVE_REJECTED", msg);
-      setErrorMessage(msg?.payload?.message || "Move rejected");
+      handleInboundMessage("MOVE_REJECTED", msg, {
+        clearError: false,
+        error: msg?.payload?.message || "Move rejected"
+      });
     });
 
     socket.on("PLAYER_RECONNECTED", () => {
-      setLastEvent("PLAYER_RECONNECTED received");
       showBanner("Your opponent has reconnected.");
     });
 
     socket.on("PLAYER_LEFT", () => {
-      setLastEvent("PLAYER_LEFT received");
       setErrorMessage("Opponent disconnected. They can resume using the saved game ID.");
     });
 
     socket.on("REMATCH_STATUS", (msg) => {
-      setLastEvent("REMATCH_STATUS received");
-      appendMessage("in", "REMATCH_STATUS", msg);
+      handleInboundMessage("REMATCH_STATUS", msg, {
+        clearError: false
+      });
 
       const rematch = msg?.payload?.rematch || { white: false, black: false };
 
@@ -269,15 +301,17 @@ function App() {
     });
 
     socket.on("REMATCH_START", (msg) => {
-      setLastEvent("REMATCH_START received");
-      appendMessage("in", "REMATCH_START", msg);
-      showBanner("Both players accepted. New game started.");
+      handleInboundMessage("REMATCH_START", msg, {
+        clearError: false,
+        banner: "Both players accepted. New game started."
+      });
     });
 
     socket.on("ERROR", (msg) => {
-      setLastEvent("ERROR received");
-      appendMessage("in", "ERROR", msg);
-      setErrorMessage(msg?.payload?.message || "An error occurred");
+      handleInboundMessage("ERROR", msg, {
+        clearError: false,
+        error: msg?.payload?.message || "An error occurred"
+      });
     });
 
     return () => {
@@ -307,6 +341,7 @@ function App() {
     isPlayersTurn &&
     connected &&
     initialised;
+  // In short: you can only drag if the game is live, you are a player, and it is your turn.
 
   const localRematchAccepted =
     assignedColour === "white"
@@ -324,19 +359,7 @@ function App() {
 
   function formatResult(result) {
     if (!result) return "—";
-
-    const map = {
-      WHITE_WIN_CHECKMATE: "White wins by checkmate",
-      BLACK_WIN_CHECKMATE: "Black wins by checkmate",
-      WHITE_WIN_RESIGNATION: "White wins by resignation",
-      BLACK_WIN_RESIGNATION: "Black wins by resignation",
-      DRAW_STALEMATE: "Draw by stalemate",
-      DRAW_INSUFFICIENT_MATERIAL: "Draw (insufficient material)",
-      DRAW_THREEFOLD_REPETITION: "Draw by threefold repetition",
-      DRAW: "Draw (fifty-move rule or general draw)"
-    };
-
-    return map[result] || result;
+    return RESULT_LABELS[result] || result;
   }
 
   function getStatusMessage() {
@@ -381,6 +404,7 @@ function App() {
 
     const rows = [];
 
+    // Turn a flat move list into rows like: 1. e4 e5
     for (let i = 0; i < moveHistory.length; i += 2) {
       const moveNumber = Math.floor(i / 2) + 1;
       const whiteMove = moveHistory[i];
@@ -402,41 +426,29 @@ function App() {
     if (!socketRef.current || !initialised || !roomName || !roomPassword) return;
 
     setErrorMessage("");
-
-    const message = createMessage("GAME_CREATE", nextMsgId(), {
+    emitSocketMessage("GAME_CREATE", {
       roomName,
       roomPassword
     });
-
-    appendMessage("out", "GAME_CREATE", message);
-    socketRef.current.emit("GAME_CREATE", message);
   }
 
   function handleJoinRoom() {
     if (!socketRef.current || !initialised || !roomName || !roomPassword) return;
 
     setErrorMessage("");
-
-    const message = createMessage("GAME_JOIN", nextMsgId(), {
+    emitSocketMessage("GAME_JOIN", {
       roomName,
       roomPassword
     });
-
-    appendMessage("out", "GAME_JOIN", message);
-    socketRef.current.emit("GAME_JOIN", message);
   }
 
   function handleResumeGame(targetGameId = gameId) {
     if (!socketRef.current || !initialised || !targetGameId) return;
 
     setErrorMessage("");
-
-    const message = createMessage("GAME_RESUME", nextMsgId(), {
+    emitSocketMessage("GAME_RESUME", {
       gameId: targetGameId
     });
-
-    appendMessage("out", "GAME_RESUME", message);
-    socketRef.current.emit("GAME_RESUME", message);
   }
 
   function handleRequestRematch() {
@@ -445,13 +457,9 @@ function App() {
     if (localRematchAccepted) return;
 
     setErrorMessage("");
-
-    const message = createMessage("REMATCH_REQUEST", nextMsgId(), {
+    emitSocketMessage("REMATCH_REQUEST", {
       gameId: sessionState.gameId
     });
-
-    appendMessage("out", "REMATCH_REQUEST", message);
-    socketRef.current.emit("REMATCH_REQUEST", message);
   }
 
   function handleResign() {
@@ -460,13 +468,9 @@ function App() {
     if (!assignedColour) return;
 
     setErrorMessage("");
-
-    const message = createMessage("RESIGN", nextMsgId(), {
+    emitSocketMessage("RESIGN", {
       gameId: sessionState.gameId
     });
-
-    appendMessage("out", "RESIGN", message);
-    socketRef.current.emit("RESIGN", message);
   }
 
   function handlePieceDrop(sourceSquare, targetSquare, piece) {
@@ -486,18 +490,16 @@ function App() {
       (piece?.toLowerCase() === "wp" && targetSquare.endsWith("8")) ||
       (piece?.toLowerCase() === "bp" && targetSquare.endsWith("1"));
 
+    // The backend expects moves in UCI format, for example "e2e4".
     const uci = isPromotion
       ? `${sourceSquare}${targetSquare}q`
       : `${sourceSquare}${targetSquare}`;
 
-    const message = createMessage("MOVE_SUBMIT", nextMsgId(), {
+    emitSocketMessage("MOVE_SUBMIT", {
       gameId: sessionState.gameId,
       expectedRevision: sessionState.revision,
       uci
     });
-
-    appendMessage("out", "MOVE_SUBMIT", message);
-    socketRef.current.emit("MOVE_SUBMIT", message);
 
     return true;
   }
@@ -530,10 +532,14 @@ function App() {
     );
   }
 
-  function renderCreateForm() {
+  function renderRoomForm(mode) {
+    const title = mode === "create" ? "Create Room" : "Join Room";
+    const actionLabel = mode === "create" ? "Create Room" : "Join Room";
+    const submitAction = mode === "create" ? handleCreateRoom : handleJoinRoom;
+
     return (
       <div className="form-card">
-        <h2>Create Room</h2>
+        <h2>{title}</h2>
 
         <label>
           Room Name
@@ -557,51 +563,10 @@ function App() {
         <div className="button-row centered">
           <button
             className="action-button"
-            onClick={handleCreateRoom}
+            onClick={submitAction}
             disabled={!initialised || !roomName || !roomPassword}
           >
-            Create Room
-          </button>
-
-          <button className="secondary-button" onClick={() => setView("menu")}>
-            Back
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  function renderJoinForm() {
-    return (
-      <div className="form-card">
-        <h2>Join Room</h2>
-
-        <label>
-          Room Name
-          <input
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-            placeholder="Enter room name"
-          />
-        </label>
-
-        <label>
-          Room Password
-          <input
-            type="password"
-            value={roomPassword}
-            onChange={(e) => setRoomPassword(e.target.value)}
-            placeholder="Enter room password"
-          />
-        </label>
-
-        <div className="button-row centered">
-          <button
-            className="action-button"
-            onClick={handleJoinRoom}
-            disabled={!initialised || !roomName || !roomPassword}
-          >
-            Join Room
+            {actionLabel}
           </button>
 
           <button className="secondary-button" onClick={() => setView("menu")}>
@@ -755,8 +720,8 @@ function App() {
       )}
 
       {view === "menu" && renderMenu()}
-      {view === "create" && renderCreateForm()}
-      {view === "join" && renderJoinForm()}
+      {view === "create" && renderRoomForm("create")}
+      {view === "join" && renderRoomForm("join")}
       {view === "settings" && renderSettings()}
       {view === "game" && renderGame()}
     </div>

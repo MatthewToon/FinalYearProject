@@ -1,4 +1,4 @@
-/**
+/*
  * UCI move parsing helpers.
  *
  * Converts a protocol-level UCI move string (for example "e2e4" or "e7e8q")

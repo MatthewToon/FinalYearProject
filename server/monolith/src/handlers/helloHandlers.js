@@ -16,12 +16,22 @@ const {
   createErrorMessage
 } = require("../protocol/envelope");
 const handshakeService = require("../services/handshakeService");
+const {
+  recordSocketMessage,
+  recordSocketError,
+  recordOperationDuration
+} = require("../metrics/latency");
 
 function registerHelloHandlers(io, socket) {
   socket.on(MESSAGE_TYPES.HELLO, (rawMessage) => {
+    const startedAtMs = Date.now();
+    recordSocketMessage(MESSAGE_TYPES.HELLO, "received");
     const parsed = parseEnvelope(rawMessage);
 
     if (!parsed.ok) {
+      recordSocketMessage(MESSAGE_TYPES.HELLO, "invalid");
+      recordSocketError(MESSAGE_TYPES.HELLO, parsed.error.code);
+      recordOperationDuration("hello", startedAtMs);
       socket.emit(
         MESSAGE_TYPES.ERROR,
         createErrorMessage(
@@ -35,6 +45,9 @@ function registerHelloHandlers(io, socket) {
     const result = handshakeService.handleHello(socket.id, parsed.message.payload);
 
     if (!result.ok) {
+      recordSocketMessage(MESSAGE_TYPES.HELLO, "error");
+      recordSocketError(MESSAGE_TYPES.HELLO, result.error.code);
+      recordOperationDuration("hello", startedAtMs);
       socket.emit(
         MESSAGE_TYPES.ERROR,
         createErrorMessage(result.error.code, result.error.message)
@@ -55,6 +68,8 @@ function registerHelloHandlers(io, socket) {
         parsed.message.clientMsgId
       )
     );
+    recordSocketMessage(MESSAGE_TYPES.HELLO, "accepted");
+    recordOperationDuration("hello", startedAtMs);
   });
 }
 

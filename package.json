@@ -1,5 +1,29 @@
 {
   "dependencies": {
+    "chess.js": "^1.4.0",
+    "csv-parser": "^3.2.0",
     "socket.io-client": "^4.8.3"
-  }
+  },
+  "name": "finalyearproject",
+  "version": "1.0.0",
+  "description": "Repository for **COMP3932 - Synoptic Project**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MatthewToon/FinalYearProject.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/MatthewToon/FinalYearProject/issues"
+  },
+  "homepage": "https://github.com/MatthewToon/FinalYearProject#readme"
 }

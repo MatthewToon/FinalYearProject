@@ -1,3 +1,9 @@
+/*
+ * Protocol message name list.
+ *
+ * These string constants define the socket event names used by both the client and server
+ */
+
 module.exports = {
   HELLO: "HELLO",
   WELCOME: "WELCOME",

@@ -1,4 +1,4 @@
-/**
+/*
  * Shared configuration constants used by the monolith backend.
  *
  * This file contains values that are stable across the application, such as:

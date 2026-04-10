@@ -1,3 +1,10 @@
+/*
+ * Script: testRematch
+ *
+ * This is a small development/testing script used during the project.
+ * Read the code below to see which server event or workflow it exercises.
+ */
+
 const { io } = require("socket.io-client");
 
 const SERVER_URL = "http://localhost:3001";

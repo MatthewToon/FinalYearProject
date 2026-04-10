@@ -2,13 +2,12 @@
  * Monolith server entry point.
  *
  * This file bootstraps the backend runtime by:
- * - loading configuration
- * - creating the Express HTTP server
- * - creating the Socket.IO server
- * - exposing health endpoints
- * - registering socket handlers
+ * loading configuration
+ * creating the Express HTTP server
+ * creating the Socket.IO server
+ * exposing health endpoints
+ * registering socket handlers
  *
- * It should remain an entry point, not a place for business logic.
  */
 
 const express = require("express");
@@ -16,10 +15,12 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 const env = require("./config/env");
-const pool = require("./persistence/db");
+const { pool } = require("./persistence/db");
 const registerHandlers = require("./handlers/registerHandlers");
 const connectionRegistry = require("./connection/connectionRegistry");
-const sessionStore = require("./state/sessionStore"); // ✅ NEW
+const sessionStore = require("./state/sessionStore");
+const { register } = require("./metrics/registry");
+const { updateProcessMetrics } = require("./metrics/processMetrics");
 
 const app = express();
 const server = http.createServer(app);
@@ -28,6 +29,14 @@ const io = new Server(server, {
   cors: {
     origin: env.clientOrigin
   }
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("[process] Uncaught exception:", error);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[process] Unhandled rejection:", reason);
 });
 
 app.get("/health", async (req, res) => {
@@ -50,11 +59,18 @@ app.get("/health", async (req, res) => {
   }
 });
 
+app.get("/metrics", async (req, res) => {
+  updateProcessMetrics();
+
+  res.set("Content-Type", register.contentType);
+  res.status(200).send(await register.metrics());
+});
+
 registerHandlers(io);
 
-// Async startup with rehydration
 async function startServer() {
   try {
+    console.log("[startup] Loading persisted sessions from database...");
     await sessionStore.loadSessionsFromDatabase();
 
     server.listen(env.port, () => {

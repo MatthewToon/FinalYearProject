@@ -1,4 +1,4 @@
-/**
+/*
  * Protocol error code definitions.
  *
  * This file centralises the error codes used by the application protocol so

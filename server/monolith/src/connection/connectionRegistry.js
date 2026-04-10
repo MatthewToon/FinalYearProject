@@ -17,6 +17,7 @@ function registerSocket(socketId) {
     initialised: false,
     clientId: null,
     playerId: null,
+    activeGameId: null,
     connectedAt: Date.now()
   });
 }
@@ -30,6 +31,19 @@ function markInitialised(socketId, data = {}) {
     initialised: true,
     clientId: data.clientId || null,
     playerId: data.playerId || null
+  };
+
+  connections.set(socketId, updated);
+  return updated;
+}
+
+function setActiveGame(socketId, gameId) {
+  const existing = connections.get(socketId);
+  if (!existing) return null;
+
+  const updated = {
+    ...existing,
+    activeGameId: gameId || null
   };
 
   connections.set(socketId, updated);
@@ -51,6 +65,7 @@ function getConnectionCount() {
 module.exports = {
   registerSocket,
   markInitialised,
+  setActiveGame,
   getConnection,
   removeSocket,
   getConnectionCount

@@ -5,14 +5,13 @@
  * Active sessions are cached in memory for fast access, while PostgreSQL
  * provides durable storage and enables recovery after server restarts.
  *
- * - Writes (create/save) update both DB and in-memory cache
- * - Reads prefer cache, with DB fallback if needed
- * - Socket-related data remains in-memory only (not persisted)
+ * Writes (create/save) update both DB and in-memory cache
+ * Reads prefer cache, with DB fallback if needed
+ * Socket-related data remains in-memory only (not persisted)
  *
- * Note: All DB operations are async, callers must use `await`.
  */
 
-const { pool } = require("../config/database");
+const { pool } = require("../persistence/db");
 
 const sessions = new Map();
 

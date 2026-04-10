@@ -3,10 +3,10 @@
  *
  * This service handles the application-level effects of a socket disconnect.
  * It is responsible for:
- * - locating any active game session associated with the disconnected socket
- * - marking the relevant player as disconnected
- * - preserving the authoritative session state
- * - returning enough information for handlers to emit PLAYER_LEFT and STATE_SYNC
+ * locating any active game session associated with the disconnected socket
+ * marking the relevant player as disconnected
+ * preserving the authoritative session state
+ * returning enough information for handlers to emit PLAYER_LEFT and STATE_SYNC
  *
  * It does not emit socket events directly.
  */
