@@ -152,3 +152,7 @@ docker-compose.override.yml
 # Temp/test artifacts
 tmp/
 test-results/
+
+# Python benchmark tooling
+__pycache__/
+*.pyc

@@ -91,24 +91,39 @@ The system is being implemented in two versions:
     localhost:6379
 
 # Render Deployment
-This repository now includes a basic Render blueprint at [render.yaml](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/render.yaml) for deploying the current monolith setup.
+The monolith is set up for manual Render deployment using:
 
-It creates:
-- a Node web service for the monolith backend
-- a static site for the React client
 - a Render Postgres database
+- a Render Node web service for the monolith backend
+- a Render static site for the React client
 
 ## Render Steps
-1. Push the repository to GitHub.
-2. In Render, choose `New` then `Blueprint`.
-3. Connect the GitHub repository and select this project.
-4. Render will detect [render.yaml](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/render.yaml) and show the three resources it will create.
-5. During setup, enter a value for `VITE_SERVER_URL` on the static site.
-   Use the public Render URL of the monolith service, for example:
-   `https://fyp-chess-monolith.onrender.com`
-6. Complete the deployment and wait for the services to finish building.
+1. Create a Render Postgres database.
+2. Create a Render web service from this repo using:
+   - branch: `feature/monolith-evaluation`
+   - root directory: `server/monolith`
+   - build command: `npm install`
+   - start command: `npm start`
+3. Add these backend environment variables:
+   - `NODE_ENV=production`
+   - `CLIENT_ORIGIN=*`
+   - `DATABASE_URL=<Render internal Postgres URL>`
+4. Apply [initial_schema.sql](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/infrastructure/migrations/initial_schema.sql) to the Render Postgres database.
+5. Create a Render static site from this repo using:
+   - branch: `feature/monolith-evaluation`
+   - root directory: `client`
+   - build command: `npm install && npm run build`
+   - publish directory: `dist`
+6. Add the frontend environment variable:
+   - `VITE_SERVER_URL=<public Render URL of the monolith service>`
 
 ## Important Notes
 - The client uses `VITE_SERVER_URL`, so the browser must be pointed at the monolith's public Render URL.
-- `CLIENT_ORIGIN` is currently set to `*` in the Render blueprint to keep deployment simple. You can tighten that later to the exact client URL if you want.
-- The current Render setup is for the monolith only. The decomposed version can be added later as a separate service set once it is ready.
+- `CLIENT_ORIGIN` is currently set to `*` to keep deployment simple.
+- `/health` and `/metrics` should both respond once the backend is live.
+- The current Render setup is for the monolith only. The decomposed version can be added later.
+
+## Hosted Benchmark Start Point
+The hosted benchmarking notes are documented in [benchmark/README.md](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/benchmark/README.md).
+
+The repo also includes [prepareReplayGames.js](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/scripts/prepareReplayGames.js), which converts [gamesCleaned.csv](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/data/gamesCleaned.csv) into [gamesReplay.json](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/data/gamesReplay.json) for replay-based testing.
