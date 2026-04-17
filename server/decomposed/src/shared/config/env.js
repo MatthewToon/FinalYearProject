@@ -37,12 +37,20 @@ function getServicePort(serviceName) {
   throw new Error(`Unknown service name: ${serviceName}`);
 }
 
+function getDatabaseUrl(serviceName) {
+  if (serviceName === "gateway") {
+    return process.env.DATABASE_URL || null;
+  }
+
+  return requireEnv("DATABASE_URL");
+}
+
 function loadEnv(serviceName) {
   return {
     nodeEnv: process.env.NODE_ENV || "development",
     serviceName,
     port: getServicePort(serviceName),
-    databaseUrl: requireEnv("DATABASE_URL"),
+    databaseUrl: getDatabaseUrl(serviceName),
     redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
     clientOrigin: process.env.CLIENT_ORIGIN || "*",
     requestTimeoutMs: Number(process.env.INTERNAL_REQUEST_TIMEOUT_MS || 5000)
