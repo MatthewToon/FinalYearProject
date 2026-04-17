@@ -13,6 +13,13 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "decomposed:gateway": "npm --prefix server/decomposed run start:gateway",
+    "decomposed:session": "npm --prefix server/decomposed run start:session",
+    "decomposed:game": "npm --prefix server/decomposed run start:game",
+    "validate:decomposed:e2e": "node scripts/phaseSix/testEndToEnd.js",
+    "validate:decomposed:reconnect": "node scripts/phaseSix/testLiveReconnect.js",
     "benchmark:locust:ui": "python -m locust -f benchmark/locust/locustfile.py",
     "benchmark:locust:headless": "python -m locust -f benchmark/locust/locustfile.py --headless"
   },

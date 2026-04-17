@@ -1,0 +1,41 @@
+/*
+ * Shared external protocol message names.
+ *
+ * The decomposed variant keeps the same client-facing contract as the
+ * monolith so the same React client and benchmark harness can be reused.
+ */
+
+module.exports = {
+  HELLO: "HELLO",
+  WELCOME: "WELCOME",
+  ERROR: "ERROR",
+
+  GAME_CREATE: "GAME_CREATE",
+  GAME_CREATED: "GAME_CREATED",
+
+  GAME_JOIN: "GAME_JOIN",
+  GAME_JOINED: "GAME_JOINED",
+  GAME_START: "GAME_START",
+
+  GAME_RESUME: "GAME_RESUME",
+  GAME_RESUMED: "GAME_RESUMED",
+
+  STATE_SYNC_REQUEST: "STATE_SYNC_REQUEST",
+  STATE_SYNC: "STATE_SYNC",
+  STATE_UPDATE: "STATE_UPDATE",
+
+  MOVE_SUBMIT: "MOVE_SUBMIT",
+  MOVE_ACCEPTED: "MOVE_ACCEPTED",
+  MOVE_REJECTED: "MOVE_REJECTED",
+
+  GAME_CONCLUDED: "GAME_CONCLUDED",
+
+  PLAYER_LEFT: "PLAYER_LEFT",
+  PLAYER_RECONNECTED: "PLAYER_RECONNECTED",
+
+  REMATCH_REQUEST: "REMATCH_REQUEST",
+  REMATCH_STATUS: "REMATCH_STATUS",
+  REMATCH_START: "REMATCH_START",
+
+  RESIGN: "RESIGN"
+};

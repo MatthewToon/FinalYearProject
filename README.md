@@ -117,6 +117,43 @@ The monolith is set up for manual Render deployment using:
 6. Add the frontend environment variable:
    - `VITE_SERVER_URL=<public Render URL of the monolith service>`
 
+## Decomposed Local Run
+The service-oriented refactor lives in [server/decomposed](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/server/decomposed) and currently runs as three local Node services plus Docker-hosted PostgreSQL and Redis.
+
+1. Start infrastructure from the project root:
+   - `npm run infra:up`
+2. Install decomposed service dependencies:
+   - `cd server/decomposed`
+   - `npm install`
+3. Open three PowerShell tabs from the project root and run:
+   - Tab 1: `npm run decomposed:session`
+   - Tab 2: `npm run decomposed:game`
+   - Tab 3: `npm run decomposed:gateway`
+4. Verify health endpoints:
+   - [http://localhost:3001/health](http://localhost:3001/health)
+   - [http://localhost:3002/health](http://localhost:3002/health)
+   - [http://localhost:3003/health](http://localhost:3003/health)
+
+### Decomposed Validation
+The current phase six validation commands are:
+
+- `npm run validate:decomposed:e2e`
+- `npm run validate:decomposed:reconnect`
+
+## Decomposed Render Start Point
+The decomposed Render blueprint is stored in [render.decomposed.yaml](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/render.decomposed.yaml).
+
+It defines:
+
+- a public gateway service
+- a private session service
+- a private game service
+- a Key Value instance for Redis-compatible pub/sub
+- a Postgres database
+- a separate static client site for the decomposed deployment
+
+The database schema still needs to be applied manually using [initial_schema.sql](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/infrastructure/migrations/initial_schema.sql), just as with the monolith deployment.
+
 ## Important Notes
 - The client uses `VITE_SERVER_URL`, so the browser must be pointed at the monolith's public Render URL.
 - `CLIENT_ORIGIN` is currently set to `*` to keep deployment simple.
@@ -126,4 +163,4 @@ The monolith is set up for manual Render deployment using:
 ## Hosted Benchmark Start Point
 The hosted benchmarking notes are documented in [benchmark/README.md](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/benchmark/README.md).
 
-The repo also includes [prepareReplayGames.js](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/scripts/prepareReplayGames.js), which converts [gamesCleaned.csv](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/data/gamesCleaned.csv) into [gamesReplay.json](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/data/gamesReplay.json) for replay-based testing.
+The repo also includes [prepareReplayGames.js](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/scripts/phaseFive/prepareReplayGames.js), which converts [gamesCleaned.csv](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/data/gamesCleaned.csv) into [gamesReplay.json](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/data/gamesReplay.json) for replay-based testing.
