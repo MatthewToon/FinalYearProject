@@ -1,16 +1,3 @@
-/*
- * Game-state / move service entry point.
- *
- * Responsibilities:
- * - maintain the authoritative move-validation path
- * - enforce turn order and revision sequencing
- * - detect game completion
- * - persist move and game-state updates
- *
- * The service returns gateway actions which the gateway then executes against
- * connected browser sockets.
- */
-
 process.env.CHESS_SERVICE_NAME = "game";
 
 const express = require("express");

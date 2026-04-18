@@ -1,16 +1,3 @@
-/*
- * Session / lifecycle service entry point.
- *
- * Responsibilities:
- * - room creation and joining
- * - reconnect / resume flow
- * - rematch and resignation handling
- * - disconnect-related session updates
- *
- * The service receives internal requests over Redis pub/sub and returns a
- * list of gateway actions for the browser-facing gateway to execute.
- */
-
 process.env.CHESS_SERVICE_NAME = "session";
 
 const express = require("express");

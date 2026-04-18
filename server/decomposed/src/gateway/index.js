@@ -1,13 +1,3 @@
-/*
- * Gateway service entry point.
- *
- * Responsibilities:
- * - own the client-facing Socket.IO server
- * - manage HELLO handshake and local connection registry
- * - forward lifecycle and move requests to internal services via Redis pub/sub
- * - execute returned gateway actions such as room joins and client broadcasts
- */
-
 process.env.CHESS_SERVICE_NAME = "gateway";
 
 const crypto = require("crypto");
@@ -318,14 +308,6 @@ async function startGateway() {
         connectionRegistry.removeSocket(socket.id);
       }
     });
-  });
-
-  process.on("uncaughtException", (error) => {
-    console.error("[gateway] Uncaught exception:", error);
-  });
-
-  process.on("unhandledRejection", (reason) => {
-    console.error("[gateway] Unhandled rejection:", reason);
   });
 
   server.listen(env.port, () => {

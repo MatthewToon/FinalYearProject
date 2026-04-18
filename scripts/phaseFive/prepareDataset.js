@@ -1,15 +1,3 @@
-/*
- * Dataset cleaning script.
- *
- * This script reads the original chess CSV file and writes a cleaned version
- * that is easier to use for replay testing later on.
- *
- * In simple terms:
- * - keep rows with usable move histories
- * - remove obviously unsuitable games
- * - keep only the columns the project actually needs
- */
-
 const fs = require("fs");
 const path = require("path");
 const csv = require("csv-parser");

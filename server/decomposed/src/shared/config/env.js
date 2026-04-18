@@ -1,10 +1,3 @@
-/*
- * Shared environment loader for the decomposed services.
- *
- * Each service gets its own port, but they all share the same database and
- * Redis configuration so local setup stays simple.
- */
-
 require("dotenv").config();
 
 function requireEnv(name, fallback = undefined) {

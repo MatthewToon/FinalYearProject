@@ -1,17 +1,3 @@
-/*
- * Replay dataset preparation script.
- *
- * This script converts the cleaned chess CSV into a JSON file that is easier
- * for hosted load tools to use later on.
- *
- * In simple terms:
- * - read gamesCleaned.csv
- * - convert SAN move lists into UCI moves using chess.js
- * - keep only games that convert cleanly and end naturally on the board
- * - randomly choose 1000 of those valid finished games
- * - write a replay-ready JSON file into the root data folder
- */
-
 const fs = require("fs");
 const path = require("path");
 const csv = require("csv-parser");

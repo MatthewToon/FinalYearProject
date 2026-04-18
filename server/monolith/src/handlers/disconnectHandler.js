@@ -20,7 +20,6 @@ const {
 
 function registerDisconnectHandler(io, socket) {
   socket.on("disconnect", async () => {
-    console.log(`Socket disconnected: ${socket.id}`);
     const startedAtMs = Date.now();
     recordSocketMessage("DISCONNECT", "received");
 

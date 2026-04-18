@@ -1,11 +1,4 @@
-/*
- * Script: phaseSix/testEndToEnd
- *
- * End-to-end validation against the decomposed gateway service.
- */
-
 const { io } = require("socket.io-client");
-
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:3001";
 
 function createMessage(type, clientMsgId, payload) {
@@ -40,8 +33,6 @@ function connectAndHello({ label, clientId, playerId }) {
     }, 5000);
 
     socket.on("connect", () => {
-      console.log(`[${label}] Connected: ${socket.id}`);
-
       socket.emit(
         "HELLO",
         createMessage("HELLO", `${label}-hello`, {
@@ -53,14 +44,10 @@ function connectAndHello({ label, clientId, playerId }) {
 
     socket.on("WELCOME", (msg) => {
       clearTimeout(timeout);
-      console.log(`[${label}] WELCOME received`);
       resolve({ socket, welcome: msg });
     });
 
-    socket.on("ERROR", (msg) => {
-      console.log(`[${label}] ERROR received:`);
-      console.log(msg);
-    });
+    socket.on("ERROR", () => {});
   });
 }
 
@@ -107,12 +94,6 @@ async function main() {
       stateSyncCreatedPromise
     ]);
 
-    console.log("\n[client1] GAME_CREATED received:");
-    console.log(gameCreated);
-
-    console.log("\n[client1] STATE_SYNC received:");
-    console.log(stateSyncCreated);
-
     const gameId = gameCreated.payload.gameId;
 
     // ============================================================
@@ -146,21 +127,6 @@ async function main() {
       syncClient2Promise
     ]);
 
-    console.log("\n[client2] GAME_JOINED received:");
-    console.log(gameJoined);
-
-    console.log("\n[client1] GAME_START received:");
-    console.log(gameStartClient1);
-
-    console.log("\n[client2] GAME_START received:");
-    console.log(gameStartClient2);
-
-    console.log("\n[client1] STATE_SYNC after join:");
-    console.log(syncClient1);
-
-    console.log("\n[client2] STATE_SYNC after join:");
-    console.log(syncClient2);
-
     let currentRevision = syncClient1.payload.revision;
 
     // ============================================================
@@ -187,15 +153,6 @@ async function main() {
       updateAfterE4Client2Promise
     ]);
 
-    console.log("\n[client1] MOVE_ACCEPTED received:");
-    console.log(moveAcceptedE4);
-
-    console.log("\n[client1] STATE_UPDATE after e2e4:");
-    console.log(updateAfterE4Client1);
-
-    console.log("\n[client2] STATE_UPDATE after e2e4:");
-    console.log(updateAfterE4Client2);
-
     currentRevision = updateAfterE4Client1.payload.revision;
 
     // ---- Move 2: e7e5 ----
@@ -218,21 +175,11 @@ async function main() {
       updateAfterE5Client2Promise
     ]);
 
-    console.log("\n[client2] MOVE_ACCEPTED received:");
-    console.log(moveAcceptedE5);
-
-    console.log("\n[client1] STATE_UPDATE after e7e5:");
-    console.log(updateAfterE5Client1);
-
-    console.log("\n[client2] STATE_UPDATE after e7e5:");
-    console.log(updateAfterE5Client2);
-
     currentRevision = updateAfterE5Client1.payload.revision;
 
     // ============================================================
     // STEP 5: Disconnect client1
     // ============================================================
-    console.log("\n--- Disconnecting client1 ---\n");
     client1.socket.disconnect();
 
     // ============================================================
@@ -265,17 +212,7 @@ async function main() {
       reconnectedNoticePromise
     ]);
 
-    console.log("\n[client1-resume] GAME_RESUMED received:");
-    console.log(resumed);
-
-    console.log("\n[client1-resume] STATE_SYNC received:");
-    console.log(resumedSync);
-
     if (reconnectedNotice) {
-      console.log("\n[client2] PLAYER_RECONNECTED received:");
-      console.log(reconnectedNotice);
-    } else {
-      console.log("\n[client2] No PLAYER_RECONNECTED received within timeout");
     }
 
     currentRevision = resumedSync.payload.revision;
@@ -310,15 +247,6 @@ async function main() {
       updateAfterNf3Client1Promise,
       updateAfterNf3Client2Promise
     ]);
-
-    console.log("\n[client1-resume] MOVE_ACCEPTED received:");
-    console.log(moveAcceptedNf3);
-
-    console.log("\n[client1-resume] STATE_UPDATE after g1f3:");
-    console.log(updateAfterNf3Client1);
-
-    console.log("\n[client2] STATE_UPDATE after g1f3:");
-    console.log(updateAfterNf3Client2);
 
     currentRevision = updateAfterNf3Client1.payload.revision;
 

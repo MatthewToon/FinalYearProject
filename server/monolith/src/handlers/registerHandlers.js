@@ -13,8 +13,6 @@ const registerGameHandlers = require("./gameHandlers");
 
 function registerHandlers(io) {
   io.on("connection", (socket) => {
-    console.log(`Socket connected: ${socket.id}`);
-
     connectionRegistry.registerSocket(socket.id);
 
     registerHelloHandlers(io, socket);

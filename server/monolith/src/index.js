@@ -1,15 +1,3 @@
-/*
- * Monolith server entry point.
- *
- * This file bootstraps the backend runtime by:
- * loading configuration
- * creating the Express HTTP server
- * creating the Socket.IO server
- * exposing health endpoints
- * registering socket handlers
- *
- */
-
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -29,14 +17,6 @@ const io = new Server(server, {
   cors: {
     origin: env.clientOrigin
   }
-});
-
-process.on("uncaughtException", (error) => {
-  console.error("[process] Uncaught exception:", error);
-});
-
-process.on("unhandledRejection", (reason) => {
-  console.error("[process] Unhandled rejection:", reason);
 });
 
 app.get("/health", async (req, res) => {
