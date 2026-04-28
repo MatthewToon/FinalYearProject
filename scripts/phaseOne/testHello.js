@@ -1,6 +1,4 @@
-/*
-* Integration Test #1 - Minimal handshake test
-*/
+// Integration Test #1 - Minimal handshake test
 
 const { io } = require("socket.io-client");
 

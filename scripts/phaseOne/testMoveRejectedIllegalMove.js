@@ -1,11 +1,8 @@
-/**
- * Negative-path integration test:
- * white submits a syntactically valid but illegal move.
- *
- * Expected result:
- * - server rejects the move with MOVE_REJECTED
- * - rejection code should be ILLEGAL_MOVE
- */
+// Negative-path integration test:
+// white submits a syntactically valid but illegal move.
+// Expected result:
+// - server rejects the move with MOVE_REJECTED
+// - rejection code should be ILLEGAL_MOVE
 
 const { io } = require("socket.io-client");
 

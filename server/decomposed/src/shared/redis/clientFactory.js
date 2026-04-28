@@ -1,6 +1,4 @@
-/*
- * Redis client creation helper.
- */
+// Redis client creation helper.
 
 const { createClient } = require("redis");
 

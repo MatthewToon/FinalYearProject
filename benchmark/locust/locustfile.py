@@ -1,19 +1,15 @@
-"""
-Locust benchmark harness for the hosted chess monolith.
-
-One Locust user models one full chess game between two socket clients:
-- player A connects and sends HELLO
-- player B connects and sends HELLO
-- player A creates a room
-- player B joins the room
-- both players reach GAME_START and STATE_SYNC
-- the pair replays one legal game from data/gamesReplay.json
-
-Supported modes:
-- standard: normal full-game replay
-- fault: replay with a chosen connection, session, or move fault
-- stress: normal replay plus a Locust step-load shape that keeps raising users
-"""
+# Locust benchmark harness for the hosted chess monolith.
+# One Locust user models one full chess game between two socket clients:
+# - player A connects and sends HELLO
+# - player B connects and sends HELLO
+# - player A creates a room
+# - player B joins the room
+# - both players reach GAME_START and STATE_SYNC
+# - the pair replays one legal game from data/gamesReplay.json
+# Supported modes:
+# - standard: normal full-game replay
+# - fault: replay with a chosen connection, session, or move fault
+# - stress: normal replay plus a Locust step-load shape that keeps raising users
 
 import json
 import locust.stats
@@ -46,13 +42,10 @@ GAME_INDEX = 0
 
 @events.init.add_listener
 def configure_graceful_stop(environment, **kwargs):
-    """
-    Tell Locust to let an in-flight game finish when Stop is pressed.
-
-    One Locust task represents one whole game, so using stop_timeout gives us
-    the desired behaviour without custom shutdown orchestration:
-    stop spawning new work, but allow already-running games time to conclude.
-    """
+    # Tell Locust to let an in-progress game finish when Stop is pressed.
+    # One Locust task represents one whole game, so using stop_timeout gives us
+    # the desired behaviour without custom shutdown orchestration:
+    # stop spawning new work, but allow already-running games time to conclude.
 
     if getattr(environment, "stop_timeout", 0.0) <= 0.0:
         environment.stop_timeout = GRACEFUL_STOP_TIMEOUT_SECONDS
@@ -548,12 +541,9 @@ class ChessGamePairUser(User):
 
 if BENCHMARK_MODE == "stress":
     class IncrementalStressShape(LoadTestShape):
-        """
-        Built-in step stress profile.
-
-        This is only registered when BENCHMARK_MODE=stress. That keeps the
-        normal Locust UI editable for the standard and fault modes.
-        """
+        # Built-in step stress profile.
+        # This is only registered when BENCHMARK_MODE=stress. That keeps the
+        # normal Locust UI editable for the standard and fault modes.
 
         def tick(self):
             run_time = self.get_run_time()

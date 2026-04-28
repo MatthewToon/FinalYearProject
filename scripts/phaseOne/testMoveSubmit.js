@@ -1,14 +1,11 @@
-/**
- * Step 4 integration test client:
- * HELLO -> GAME_CREATE -> second client HELLO -> GAME_JOIN -> MOVE_SUBMIT.
- *
- * Purpose:
- * - create a game with client 1
- * - join the game with client 2
- * - submit a valid move as white
- * - verify MOVE_ACCEPTED is returned
- * - verify both clients receive STATE_UPDATE
- */
+// Step 4 integration test client:
+// HELLO -> GAME_CREATE -> second client HELLO -> GAME_JOIN -> MOVE_SUBMIT.
+// Purpose:
+// - create a game with client 1
+// - join the game with client 2
+// - submit a valid move as white
+// - verify MOVE_ACCEPTED is returned
+// - verify both clients receive STATE_UPDATE
 
 const { io } = require("socket.io-client");
 

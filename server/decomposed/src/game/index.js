@@ -1,3 +1,5 @@
+// Game service entry point for authoritative move processing.
+
 process.env.CHESS_SERVICE_NAME = "game";
 
 const express = require("express");

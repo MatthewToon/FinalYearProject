@@ -1,17 +1,13 @@
-/*
- * Move submission service.
- *
- * This service applies chess moves to the authoritative in-memory game
- * session. It is responsible for:
- * - validating that a move can be submitted in the current state
- * - checking the submitted revision
- * - checking turn ownership
- * - validating the move using chess.js
- * - updating authoritative session state
- * - incrementing the revision
- *
- * It does not emit socket events directly; handlers do that.
- */
+// Move submission service.
+// This service applies chess moves to the authoritative in-memory game
+// session. It is responsible for:
+// - validating that a move can be submitted in the current state
+// - checking the submitted revision
+// - checking turn ownership
+// - validating the move using chess.js
+// - updating authoritative session state
+// - incrementing the revision
+// It does not emit socket events directly; handlers do that.
 
 const { Chess } = require("chess.js");
 const sessionStore = require("../state/sessionStore");

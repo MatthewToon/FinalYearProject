@@ -1,6 +1,6 @@
-/*
- * Shared protocol error codes for the decomposed services.
- */
+// Protocol error code definitions.
+// This file centralises the error codes used by the application protocol so
+// that handlers and services can refer to a single shared set of values.
 
 module.exports = {
   INVALID_MESSAGE_FORMAT: "INVALID_MESSAGE_FORMAT",

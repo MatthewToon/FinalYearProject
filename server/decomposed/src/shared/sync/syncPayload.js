@@ -1,6 +1,7 @@
-/*
- * Builds protocol-safe sync payloads for gateway broadcasts.
- */
+// Sync service.
+// Builds protocol-safe game state payloads for STATE_SYNC responses.
+// This keeps the handler layer simple and ensures a consistent state shape
+// is sent to clients.
 
 function buildStateSyncPayload(session) {
   return {

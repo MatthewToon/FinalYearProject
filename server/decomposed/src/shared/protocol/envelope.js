@@ -1,6 +1,8 @@
-/*
- * Shared envelope helpers for client-facing protocol messages.
- */
+// Protocol envelope helpers.
+// This file is responsible for:
+// validating the general shape of incoming protocol messages
+// normalising parsed message data for handler use
+// building standard server responses using the shared message envelope
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);

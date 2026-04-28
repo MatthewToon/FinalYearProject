@@ -1,9 +1,8 @@
-/*
- * Shared constants for the decomposed services.
- *
- * These values mirror the monolith so both architectures keep the same
- * externally visible behaviour while the internal structure changes.
- */
+// Shared configuration constants used by the backend.
+// This file contains values that are stable across the application, such as:
+// - session/game states
+// - the standard starting chess position
+// - naming conventions for game rooms
 
 const SESSION_STATES = {
   NO_SESSION: "NO_SESSION",

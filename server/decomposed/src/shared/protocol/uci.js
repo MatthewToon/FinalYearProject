@@ -1,31 +1,27 @@
-/*
- * Shared UCI parsing helpers.
- *
- * Converts a protocol-level UCI move string (for example "e2e4" or "e7e8q")
- * into the object shape expected by chess.js.
- */
-
-const ERROR_CODES = require("./errorCodes");
+// Shared UCI parsing helpers.
+// Converts a protocol-level UCI move string (for example "e2e4" or "e7e8q")
+// into the object shape expected by chess.js.
+// This file validates format only. It does not decide whether the move is
+// legal in the current position.
 
 function parseUciMove(uci) {
   if (typeof uci !== "string") {
     return {
       ok: false,
       error: {
-        code: ERROR_CODES.INVALID_MESSAGE_FORMAT,
+        code: "INVALID_MESSAGE_FORMAT",
         message: "Move must be a string in UCI format"
       }
     };
   }
 
   const trimmed = uci.trim().toLowerCase();
-  const isValidUci = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(trimmed);
 
-  if (!isValidUci) {
+  if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(trimmed)) {
     return {
       ok: false,
       error: {
-        code: ERROR_CODES.INVALID_MESSAGE_FORMAT,
+        code: "INVALID_MESSAGE_FORMAT",
         message: "Move must be valid UCI, for example e2e4 or e7e8q"
       }
     };

@@ -1,13 +1,12 @@
-/*
- * Global client stylesheet.
- *
- * This file defines the visual theme for the current chess client:
- * - shared colour variables
- * - page layout
- * - form and button styling
- * - board and move-list layout
- * - basic responsive behaviour for smaller screens
- */
+/* Global client stylesheet. */
+
+/* This file defines the visual theme for the current chess client: */
+/* - shared colour variables */
+/* - page layout */
+/* - form and button styling */
+/* - board and move-list layout */
+/* - basic responsive behaviour for smaller screens */
+
 :root {
   font-family: Arial, Helvetica, sans-serif;
   line-height: 1.4;
@@ -64,7 +63,7 @@ input {
   padding: 48px 24px;
 }
 
-/* Title banner: more formal, framed, distinct from buttons */
+/* Title banner: distinct from buttons */
 .title-box {
   max-width: 1080px;
   margin: 0 auto 32px;

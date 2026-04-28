@@ -1,13 +1,10 @@
-/**
- * Integration Test #3 - HELLO -> GAME_CREATE -> 2nd client HELLO -> GAME_JOIN.
- *
- * Purpose:
- * - create a game with client 1
- * - join the game with client 2
- * - verify GAME_JOINED is returned to client 2
- * - verify both clients receive GAME_START
- * - verify both clients receive updated STATE_SYNC
- */
+// Integration Test #3 - HELLO -> GAME_CREATE -> 2nd client HELLO -> GAME_JOIN.
+// Purpose:
+// - create a game with client 1
+// - join the game with client 2
+// - verify GAME_JOINED is returned to client 2
+// - verify both clients receive GAME_START
+// - verify both clients receive updated STATE_SYNC
 
 const { io } = require("socket.io-client");
 

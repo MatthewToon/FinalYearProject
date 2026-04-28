@@ -1,14 +1,10 @@
-/**
- * Integration Test #2 - HELLO -> GAME_CREATE.
- *
- * Purpose:
- * - connect to the monolith Socket.IO server
- * - complete the HELLO / WELCOME handshake
- * - send GAME_CREATE
- * - verify that GAME_CREATED is received
- * - verify that STATE_SYNC is received
- *
- */
+// Integration Test #2 - HELLO -> GAME_CREATE.
+// Purpose:
+// - connect to the monolith Socket.IO server
+// - complete the HELLO / WELCOME handshake
+// - send GAME_CREATE
+// - verify that GAME_CREATED is received
+// - verify that STATE_SYNC is received
 
 const { io } = require("socket.io-client");
 

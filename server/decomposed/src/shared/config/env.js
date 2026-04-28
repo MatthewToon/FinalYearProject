@@ -1,3 +1,5 @@
+// Shared helper module used by the decomposed services.
+
 require("dotenv").config();
 
 function requireEnv(name, fallback = undefined) {

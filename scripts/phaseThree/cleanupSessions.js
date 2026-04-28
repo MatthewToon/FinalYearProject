@@ -1,9 +1,6 @@
-/*
- * Script: cleanupSessions
- *
- * This is a small development/testing script used during the project.
- * Read the code below to see which server event or workflow it exercises.
- */
+// Script: cleanupSessions
+// This is a small development/testing script used during the project.
+// Read the code below to see which server event or workflow it exercises.
 
 const { pool } = require("../../server/monolith/src/persistence/db");
 

@@ -1,23 +1,17 @@
-/*
- * GAME HANDLERS (Protocol Entry Layer)
- *
- * Handles all incoming game-related WebSocket messages.
- *
- * Supported message flows:
- * GAME_CREATE
- * GAME_JOIN
- * MOVE_SUBMIT
- * GAME_RESUME
- * REMATCH_REQUEST
- * RESIGN
- *
- * Responsibilities:
- * Validate incoming protocol envelope
- * Ensure HELLO handshake has completed
- * Delegate to appropriate service layer
- * Emit protocol responses (success or error)
- *
- */
+// GAME HANDLERS (Protocol Entry Layer)
+// Handles all incoming game-related WebSocket messages.
+// Supported message flows:
+// GAME_CREATE
+// GAME_JOIN
+// MOVE_SUBMIT
+// GAME_RESUME
+// REMATCH_REQUEST
+// RESIGN
+// Responsibilities:
+// Validate incoming protocol envelope
+// Ensure HELLO handshake has completed
+// Delegate to appropriate service layer
+// Emit protocol responses (success or error)
 
 const MESSAGE_TYPES = require("../protocol/messageTypes");
 const ERROR_CODES = require("../protocol/errorCodes");

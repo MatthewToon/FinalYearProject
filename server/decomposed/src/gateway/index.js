@@ -1,3 +1,5 @@
+// Gateway service entry point for client sockets and internal routing.
+
 process.env.CHESS_SERVICE_NAME = "gateway";
 
 const crypto = require("crypto");

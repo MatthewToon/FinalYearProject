@@ -1,6 +1,7 @@
-/*
- * Session validation helpers reused by the decomposed services.
- */
+// Session state transition and validation helpers.
+// This file contains small, focused rules for deciding whether a game
+// session can move between states and whether a move is allowed to be
+// applied in the current session state.
 
 const { SESSION_STATES } = require("../config/constants");
 

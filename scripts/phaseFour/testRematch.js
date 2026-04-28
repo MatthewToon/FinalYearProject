@@ -1,9 +1,6 @@
-/*
- * Script: testRematch
- *
- * This is a small development/testing script used during the project.
- * Read the code below to see which server event or workflow it exercises.
- */
+// Script: testRematch
+// This is a small development/testing script used during the project.
+// Read the code below to see which server event or workflow it exercises.
 
 const { io } = require("socket.io-client");
 
@@ -93,9 +90,7 @@ async function main() {
   let client2;
 
   try {
-    // ============================================================
     // STEP 1: Connect both players
-    // ============================================================
     client1 = await connectAndHello({
       label: "client1",
       clientId: "client-rematch-1",
@@ -108,9 +103,7 @@ async function main() {
       playerId: "player-rematch-2"
     });
 
-    // ============================================================
     // STEP 2: Create room
-    // ============================================================
     const gameCreatedPromise = waitForEvent(client1.socket, "GAME_CREATED");
     const stateSyncCreatedPromise = waitForEvent(client1.socket, "STATE_SYNC");
 
@@ -135,9 +128,7 @@ async function main() {
 
     const gameId = gameCreated.payload.gameId;
 
-    // ============================================================
     // STEP 3: Join room
-    // ============================================================
     const gameJoinedPromise = waitForEvent(client2.socket, "GAME_JOINED");
     const gameStartClient1Promise = waitForEvent(client1.socket, "GAME_START");
     const gameStartClient2Promise = waitForEvent(client2.socket, "GAME_START");
@@ -183,9 +174,7 @@ async function main() {
 
     let currentRevision = syncClient1.payload.revision;
 
-    // ============================================================
     // STEP 4: Play Fool's Mate to finish game
-    // ============================================================
 
     // 1. f2f3
     const updateAfterF3Client1Promise = waitForEvent(client1.socket, "STATE_UPDATE");
@@ -266,9 +255,7 @@ async function main() {
       );
     }
 
-    // ============================================================
     // STEP 5: White requests rematch
-    // ============================================================
     const rematchStatusClient1Promise = waitForEvent(client1.socket, "REMATCH_STATUS");
     const rematchStatusClient2Promise = waitForEvent(client2.socket, "REMATCH_STATUS");
 
@@ -294,9 +281,7 @@ async function main() {
       throw new Error("Expected only white to have accepted rematch so far");
     }
 
-    // ============================================================
     // STEP 6: Black requests rematch
-    // ============================================================
     const rematchStartClient1Promise = waitForEvent(client1.socket, "REMATCH_START");
     const rematchStartClient2Promise = waitForEvent(client2.socket, "REMATCH_START");
     const rematchSyncClient1Promise = waitForEvent(client1.socket, "STATE_SYNC");
@@ -333,9 +318,7 @@ async function main() {
     console.log("\n[client2] STATE_SYNC after rematch:");
     console.log(rematchSyncClient2);
 
-    // ============================================================
     // STEP 7: Validate reset state
-    // ============================================================
     const resetState = rematchSyncClient1.payload;
 
     if (resetState.state !== "IN_PROGRESS") {

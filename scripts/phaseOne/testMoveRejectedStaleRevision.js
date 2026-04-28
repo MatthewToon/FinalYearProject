@@ -1,11 +1,8 @@
-/*
- * Negative-path integration test:
- * valid game setup followed by MOVE_SUBMIT with a stale revision.
- *
- * Expected result:
- * - server rejects the move with MOVE_REJECTED
- * - rejection code should be STALE_REVISION
- */
+// Negative-path integration test:
+// valid game setup followed by MOVE_SUBMIT with a stale revision.
+// Expected result:
+// - server rejects the move with MOVE_REJECTED
+// - rejection code should be STALE_REVISION
 
 const { io } = require("socket.io-client");
 

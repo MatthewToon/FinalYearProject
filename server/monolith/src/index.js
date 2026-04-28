@@ -1,3 +1,5 @@
+// Monolithic server entry point for sockets, HTTP health checks, and metrics.
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");

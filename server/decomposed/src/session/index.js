@@ -1,3 +1,5 @@
+// Session service entry point for room lifecycle and player state.
+
 process.env.CHESS_SERVICE_NAME = "session";
 
 const express = require("express");

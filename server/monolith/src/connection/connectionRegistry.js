@@ -1,13 +1,9 @@
-/*
- * In-memory registry of active socket connections.
- *
- * This file tracks connection-level information such as:
- * - socket ID
- * - whether the socket has completed the HELLO handshake
- * - associated client/player identity metadata
- *
- * This is connection state, not game/session state.
- */
+// In-memory registry of active socket connections.
+// This file tracks connection-level information such as:
+// - socket ID
+// - whether the socket has completed the HELLO handshake
+// - associated client/player identity metadata
+// This is connection state, not game/session state.
 
 const connections = new Map();
 

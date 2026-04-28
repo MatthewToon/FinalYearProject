@@ -1,10 +1,7 @@
-/*
- * Database-backed session repository for the decomposed services.
- *
- * Unlike the monolith session store, this repository does not keep a long-
- * lived in-memory cache. Each service reads the latest persisted session state
- * from PostgreSQL so the split architecture stays simple and consistent.
- */
+// Database-backed session repository for the decomposed services.
+// Unlike the monolith session store, this repository does not keep a long-
+// lived in-memory cache. Each service reads the latest persisted session state
+// from PostgreSQL so the split architecture stays simple and consistent.
 
 const { pool } = require("./db");
 

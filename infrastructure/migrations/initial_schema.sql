@@ -1,3 +1,5 @@
+-- PostgreSQL schema used to persist chess game sessions.
+
 CREATE TABLE games (
     game_id UUID PRIMARY KEY,
 

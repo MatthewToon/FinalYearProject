@@ -1,166 +1,172 @@
-# Final Year Project
-Repository for **COMP3932 - Synoptic Project**
+# COMP3932 Remote Chess Application
 
-This project investigates the behaviour of two architectural approaches for a small-scale real-time distributed system using a two-player chess application as the case study.
+This repository contains the software artefact for the COMP3932 Synoptic Project. The project compares two backend architectures for the same real-time two-player chess application:
 
-The system is being implemented in two versions:
+- Monolithic architecture: one Node.js backend handles Socket.IO connections, session lifecycle, move validation, persistence, and state broadcasts.
+- Service-oriented architecture: a gateway service, session service, and game service communicate through Redis while preserving the same external client protocol.
 
-- **Monolithic architecture:** a single Node.js server process with centralised in-memory game state
-- **Hybrid service-oriented / event-driven architecture:** a split design using separate services and Redis Pub/Sub
+The React client is shared by both architectures. The backend remains authoritative for chess rules, turn order, revision checks, persistence, reconnection, resignation, rematch handling, and game completion.
 
-# Prerequisites
-1. Install Node.js (version 24.14.0 (LTS) recommended)
-    To verify installation, open a terminal and run the following commands to check version numbers:
-    node -v
-    npm -v
-2. Install Docker Desktop - used for PostgreSQL and Redis
-    To verify installation, open a temrinal and run the following commands to check version numbers:
-    docker --version
-    docker compose verison
+## Repository Structure
 
-# Project Setup (using Windows PowerShell)
-1. Run these terminal commands:
-    git clone https://github.com/MatthewToon/FinalYearProject
-    cd FinalYearProject
-2. Start infrastructrue services using terminal command:
-    docker compose up -d
-    And confirm instantiation using terminal command:
-        docker ps
-    Two container names should be returned:
-        chess_postgres and chess_redis
-3. Initialise SQL schema using terminal command:
-    Get-Content infrastructure/migrations/initial_schema.sql | docker exec -i chess_postgres psql -U chess -d chess_db
-    If successful, output should read:
-        CREATE TABLE
-        CREATE TABLE
-4. Verify database tables by running terminal command:
-    docker exec -it chess_postgres psql -U chess -d chess_db
-    Then run:
-        \dt
-    Two tables should be returned:
-        games
-        moves
-    Exit PostgreSQL with:
-        \q
-5. Install monolith backend dependencies:
-    Navigate to correct folder:
-        cd server/monolith
-    Install dependencies:
-        npm install
-6. Configure environment variables
-    Create a file named:
-        server/monolith/.env
-7. Configure envrionment variables (not required if gitignore omits .env):
-    Create a file in server/monolith named '.env'
-    Add the following content:
-        PORT=3001
-        =development
-        CLIENT_ORIGIN=*
+```text
+client/                           React/Vite browser client
+server/monolith/                  Monolithic backend
+server/decomposed/                Service-oriented backend
+infrastructure/migrations/        PostgreSQL schema
+scripts/                          Development and validation scripts
+benchmark/locust/                 Benchmark harness used during evaluation
+data/                             Cleaned chess replay dataset
+docs/                             Software Requirements Specification
+docker-compose.yml                Local PostgreSQL and Redis
+render.yaml                       Render blueprint for monolith deployment
+render.decomposed.yaml            Render blueprint for service-oriented deployment
+```
 
-        DATABASE_URL=postgres://chess:chess@localhost:5433/chess_db
+## Assessor Access
 
-        PGHOST=localhost
-        PGPORT=5433
-        PGDATABASE=chess_db
-        PGUSER=chess
-        PGPASSWORD=chess
+The simplest way to inspect the application is through the public Render client deployments:
 
-        REDIS_URL=redis://localhost:6379
-7. Start the monolith backend (from /server/monolith):
-    npm run dev
-    If successful, terminal should return:
-        'Monolith server listening on port 3001
+- Monolith: <https://fyp-client-n4z8.onrender.com/>
+- Service-oriented ("decomposed") alternative: <https://fyp-chess-client-decomposed.onrender.com/>
 
-# Verification
-1. Health endpoint
-    Once the server is running, test the health endpoint in a web browser:
-        http://localhost:3001/health
-    or in PowerShell:
-        Invoke-WebRequest http://localhost:3001/health
-    Exptected response (timetamp/uptime relative to user):
-        {"status":"ok","service":"monolith","timestamp":"2026-03-10T15:55:22.265Z","uptime":<126.3503599>,"environment":"development"}
+1. Open either client URL in two browser tabs or on two separate machines.
+2. In the first tab, create a room with a room name and password.
+3. In the second tab, join using the same room name and password.
+4. Play a short game, resign, or request a rematch to verify the main behaviours.
 
-# Infrastructure Details:
-1. PostgreSQL service runs in Docker and is exposed on:
-    localhost:5433
-    Connections details:
-        Database: chess_db
-        User: chess
-        Password: chess
-2. Redis also started through Docker and is exposed on:
-    localhost:6379
+For the service-oriented deployment, only the gateway is public. The session and game services are private Render services.
 
-# Render Deployment
-The monolith is set up for manual Render deployment using:
+## Windows Command Disclaimer
 
-- a Render Postgres database
-- a Render Node web service for the monolith backend
-- a Render static site for the React client
+All development, deployment preparation, and local testing for this project were conducted on Windows machines. 
+The local build instructions therefore use Windows PowerShell commands only.
 
-## Render Steps
-1. Create a Render Postgres database.
-2. Create a Render web service from this repo using:
-   - branch: `feature/monolith-evaluation`
-   - root directory: `server/monolith`
-   - build command: `npm install`
-   - start command: `npm start`
-3. Add these backend environment variables:
-   - `NODE_ENV=production`
-   - `CLIENT_ORIGIN=*`
-   - `DATABASE_URL=<Render internal Postgres URL>`
-4. Apply [initial_schema.sql](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/infrastructure/migrations/initial_schema.sql) to the Render Postgres database.
-5. Create a Render static site from this repo using:
-   - branch: `feature/monolith-evaluation`
-   - root directory: `client`
-   - build command: `npm install && npm run build`
-   - publish directory: `dist`
-6. Add the frontend environment variable:
-   - `VITE_SERVER_URL=<public Render URL of the monolith service>`
+## Local Build Prerequisites
 
-## Decomposed Local Run
-The service-oriented refactor lives in [server/decomposed](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/server/decomposed) and currently runs as three local Node services plus Docker-hosted PostgreSQL and Redis.
+- Git
+- Node.js 24.x. The repository includes `.node-version` with `24.14.0`.
+- npm
+- Docker Desktop with Docker Compose
 
-1. Start infrastructure from the project root:
-   - `npm run infra:up`
-2. Install decomposed service dependencies:
-   - `cd server/decomposed`
-   - `npm install`
-3. Open three PowerShell tabs from the project root and run:
-   - Tab 1: `npm run decomposed:session`
-   - Tab 2: `npm run decomposed:game`
-   - Tab 3: `npm run decomposed:gateway`
-4. Verify health endpoints:
-   - [http://localhost:3001/health](http://localhost:3001/health)
-   - [http://localhost:3002/health](http://localhost:3002/health)
-   - [http://localhost:3003/health](http://localhost:3003/health)
+Check the main tools:
 
-### Decomposed Validation
-The current phase six validation commands are:
+```powershell
+node -v
+npm -v
+docker --version
+docker compose version
+```
 
-- `npm run validate:decomposed:e2e`
-- `npm run validate:decomposed:reconnect`
+Clone the repository:
 
-## Decomposed Render Start Point
-The decomposed Render blueprint is stored in [render.decomposed.yaml](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/render.decomposed.yaml).
+```powershell
+git clone https://github.com/MatthewToon/FinalYearProject.git
+cd FinalYearProject
+git checkout feature/architectural-refactor
+```
 
-It defines:
+## Local Infrastructure
 
-- a public gateway service
-- a private session service
-- a private game service
-- a Key Value instance for Redis-compatible pub/sub
-- a Postgres database
-- a separate static client site for the decomposed deployment
+Start PostgreSQL and Redis from the repository root:
 
-The database schema still needs to be applied manually using [initial_schema.sql](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/infrastructure/migrations/initial_schema.sql), just as with the monolith deployment.
+```powershell
+docker compose up -d
+```
 
-## Important Notes
-- The client uses `VITE_SERVER_URL`, so the browser must be pointed at the monolith's public Render URL.
-- `CLIENT_ORIGIN` is currently set to `*` to keep deployment simple.
-- `/health` and `/metrics` should both respond once the backend is live.
-- The current Render setup is for the monolith only. The decomposed version can be added later.
+Apply the PostgreSQL schema:
 
-## Hosted Benchmark Start Point
-The hosted benchmarking notes are documented in [benchmark/README.md](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/benchmark/README.md).
+```powershell
+Get-Content infrastructure/migrations/initial_schema.sql | docker exec -i chess_postgres psql -U chess -d chess_db
+```
 
-The repo also includes [prepareReplayGames.js](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/scripts/phaseFive/prepareReplayGames.js), which converts [gamesCleaned.csv](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/data/gamesCleaned.csv) into [gamesReplay.json](/C:/Users/epixt/OneDrive%20-%20University%20of%20Leeds/Documents/GitHub/FinalYearProject/data/gamesReplay.json) for replay-based testing.
+If the tables already exist and a clean local database is needed:
+
+```powershell
+docker exec -i chess_postgres psql -U chess -d chess_db -c "DROP TABLE IF EXISTS moves; DROP TABLE IF EXISTS games;"
+Get-Content infrastructure/migrations/initial_schema.sql | docker exec -i chess_postgres psql -U chess -d chess_db
+```
+
+Local connection details:
+
+```text
+PostgreSQL: postgres://chess:chess@localhost:5433/chess_db
+Redis:      redis://localhost:6379
+```
+
+## Run the Monolithic Version Locally
+
+A local `server/monolith/.env` file is included for assessor convenience. It contains only local Docker defaults and should be changed if different local ports or credentials are used.
+
+Start the backend:
+
+```powershell
+cd server/monolith
+npm install
+npm run dev
+```
+
+Health check:
+
+```text
+http://localhost:3001/health
+```
+
+## Run the Service-Oriented Version Locally
+
+A local `server/decomposed/.env` file is included for assessor convenience. It contains only local Docker defaults and assigns ports `3001`, `3002`, and `3003` to the gateway, session, and game services.
+
+Install dependencies:
+
+```powershell
+cd server/decomposed
+npm install
+```
+
+Open three PowerShell terminals from the repository root:
+
+```powershell
+npm run decomposed:session
+```
+
+```powershell
+npm run decomposed:game
+```
+
+```powershell
+npm run decomposed:gateway
+```
+
+Health checks:
+
+```text
+Gateway: http://localhost:3001/health
+Session: http://localhost:3002/health
+Game:    http://localhost:3003/health
+```
+
+## Run the React Client Locally
+
+Start either backend first. Then open a new PowerShell terminal:
+
+```powershell
+cd client
+npm install
+npm run dev
+```
+
+Open the Vite URL shown in the terminal, normally:
+
+```text
+http://localhost:5173
+```
+
+For local runs, `VITE_SERVER_URL` is optional because the client defaults to `http://localhost:3001`.
+
+A local `client/.env` file is included and points to `http://localhost:3001`. To point the client at a hosted backend, change `VITE_SERVER_URL` to the hosted monolith or gateway URL.
+
+## Notes
+
+- In a production project, `.env` files would normally be ignored and real secrets would be managed outside Git.
+- The monolith and service-oriented versions expose the same external protocol, so the same client can be used with either backend.
+- Benchmarking assets remain in the repository as evidence of the evaluation process, but setup focuses on hosted access and local application build only.

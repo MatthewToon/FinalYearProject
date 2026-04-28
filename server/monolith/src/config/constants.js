@@ -1,14 +1,10 @@
-/*
- * Shared configuration constants used by the monolith backend.
- *
- * This file contains values that are stable across the application, such as:
- * - session/game states
- * - the standard starting chess position
- * - naming conventions for Socket.IO rooms
- *
- * Keeping these in one place avoids repeated string literals and makes it
- * easier to keep the implementation aligned with the protocol and SRS.
- */
+// Shared configuration constants used by the monolith backend.
+// This file contains values that are stable across the application, such as:
+// - session/game states
+// - the standard starting chess position
+// - naming conventions for Socket.IO rooms
+// Keeping these in one place avoids repeated string literals and makes it
+// easier to keep the implementation aligned with the protocol and SRS.
 
 const SESSION_STATES = {
   NO_SESSION: "NO_SESSION",

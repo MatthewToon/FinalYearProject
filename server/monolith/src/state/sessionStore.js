@@ -1,15 +1,10 @@
-/*
- * Session store with PostgreSQL persistence.
- *
- * Extends the original in-memory store by adding a database-backed layer.
- * Active sessions are cached in memory for fast access, while PostgreSQL
- * provides durable storage and enables recovery after server restarts.
- *
- * Writes (create/save) update both DB and in-memory cache
- * Reads prefer cache, with DB fallback if needed
- * Socket-related data remains in-memory only (not persisted)
- *
- */
+// Session store with PostgreSQL persistence.
+// Extends the original in-memory store by adding a database-backed layer.
+// Active sessions are cached in memory for fast access, while PostgreSQL
+// provides durable storage and enables recovery after server restarts.
+// Writes (create/save) update both DB and in-memory cache
+// Reads prefer cache, with DB fallback if needed
+// Socket-related data remains in-memory only (not persisted)
 
 const { pool } = require("../persistence/db");
 

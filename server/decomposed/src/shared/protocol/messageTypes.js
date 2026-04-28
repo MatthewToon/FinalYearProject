@@ -1,9 +1,5 @@
-/*
- * Shared external protocol message names.
- *
- * The decomposed variant keeps the same client-facing contract as the
- * monolith so the same React client and benchmark harness can be reused.
- */
+// Protocol message name list.
+// These string constants define the socket event names used by both the client and server
 
 module.exports = {
   HELLO: "HELLO",

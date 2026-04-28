@@ -1,6 +1,4 @@
-/*
- * Shared PostgreSQL pool for the decomposed services.
- */
+// Shared PostgreSQL pool for the decomposed services.
 
 const { Pool } = require("pg");
 const { loadEnv } = require("../config/env");

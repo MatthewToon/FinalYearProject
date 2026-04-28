@@ -1,17 +1,13 @@
-/*
- * Main client application.
- *
- * This React component is the whole browser-side chess app for now.
- * It:
- * - creates or restores the browser's player identity
- * - opens the Socket.IO connection to the backend
- * - listens for server events such as room creation, state sync, and move updates
- * - renders the menu, forms, board, and move history
- *
- * The browser is not the source of truth for the game.
- * The server is authoritative, and the client mainly sends requests and displays
- * the latest state sent back from the backend.
- */
+// Main client application.
+// This React component is the whole browser-side chess app, which currently:
+// - creates or restores the browser's player identity
+// - opens the Socket.IO connection to the backend
+// - listens for server events such as room creation, state sync, and move updates
+// - renders the menu, forms, board, and move history
+// The browser is not the source of truth for the game.
+// The server is authoritative, and the client mainly sends requests and displays
+// the latest state sent back from the backend.
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { Chessboard } from "react-chessboard";
@@ -335,13 +331,13 @@ function App() {
     assignedColour !== null &&
     sessionState.turnColour === assignedColour;
 
+  // Can only drag if the game is live, you are a player, and it is your turn.
   const canDragPieces =
     Boolean(sessionState) &&
     sessionState.state === "IN_PROGRESS" &&
     isPlayersTurn &&
     connected &&
     initialised;
-  // In short: you can only drag if the game is live, you are a player, and it is your turn.
 
   const localRematchAccepted =
     assignedColour === "white"

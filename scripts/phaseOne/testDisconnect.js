@@ -1,12 +1,9 @@
-/*
- * Step 5 integration test client:
- * HELLO -> GAME_CREATE -> second client HELLO -> GAME_JOIN -> disconnect client 2.
- *
- * Purpose:
- * - verify disconnect handling preserves session state
- * - verify PLAYER_LEFT is broadcast
- * - verify updated STATE_SYNC marks the disconnected player correctly
- */
+// Step 5 integration test client:
+// HELLO -> GAME_CREATE -> second client HELLO -> GAME_JOIN -> disconnect client 2.
+// Purpose:
+// - verify disconnect handling preserves session state
+// - verify PLAYER_LEFT is broadcast
+// - verify updated STATE_SYNC marks the disconnected player correctly
 
 const { io } = require("socket.io-client");
 

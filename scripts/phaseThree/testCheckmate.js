@@ -1,9 +1,6 @@
-/*
- * Script: testCheckmate
- *
- * This is a small development/testing script used during the project.
- * Read the code below to see which server event or workflow it exercises.
- */
+// Script: testCheckmate
+// This is a small development/testing script used during the project.
+// Read the code below to see which server event or workflow it exercises.
 
 const { io } = require("socket.io-client");
 
@@ -12,9 +9,7 @@ const SERVER_URL = "http://localhost:3001";
 let gameId = null;
 let currentRevision = 0;
 
-// =====================
 // CLIENT 1 (WHITE)
-// =====================
 const client1 = io(SERVER_URL);
 
 client1.on("connect", () => {
@@ -62,9 +57,7 @@ client1.on("MOVE_ACCEPTED", () => {
   console.log("[client1] MOVE_ACCEPTED");
 });
 
-// =====================
 // CLIENT 2 (BLACK)
-// =====================
 const client2 = io(SERVER_URL);
 
 client2.on("connect", () => {
@@ -113,9 +106,7 @@ client2.on("MOVE_ACCEPTED", () => {
   console.log("[client2] MOVE_ACCEPTED");
 });
 
-// =====================
 // FOOL'S MATE SEQUENCE
-// =====================
 
 function submitMove(socket, move, label) {
   console.log(`[${label}] submitting move: ${move} (rev=${currentRevision})`);

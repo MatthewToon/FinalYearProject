@@ -1,3 +1,5 @@
+# Render deployment blueprint for the decomposed services.
+
 services:
   - type: web
     runtime: node

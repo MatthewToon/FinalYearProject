@@ -1,11 +1,7 @@
-/*
- * Primary PostgreSQL pool for the monolith.
- *
- * Most backend code imports this pool when it needs to query the database.
- * The connection string itself comes from config/env.
- *
- * This file is the single source of truth for database access in the monolith.
- */
+// Primary PostgreSQL pool for the monolith.
+// Most backend code imports this pool when it needs to query the database.
+// The connection string itself comes from config/env.
+// This file is the single source of truth for database access in the monolith.
 
 const { Pool } = require("pg");
 const env = require("../config/env");

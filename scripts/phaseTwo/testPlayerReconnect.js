@@ -1,9 +1,6 @@
-/*
- * Script: testPlayerReconnect
- *
- * This is a small development/testing script used during the project.
- * Read the code below to see which server event or workflow it exercises.
- */
+// Script: testPlayerReconnect
+// This is a small development/testing script used during the project.
+// Read the code below to see which server event or workflow it exercises.
 
 const { io } = require("socket.io-client");
 
@@ -16,9 +13,7 @@ let gameId = gameIdArg || null;
 const client1 = io(SERVER_URL);
 const client2 = io(SERVER_URL);
 
-// --------------------
 // CLIENT 1
-// --------------------
 client1.on("connect", () => {
   console.log("[client1] Connected:", client1.id);
 
@@ -68,9 +63,7 @@ client1.on("GAME_RESUMED", () => {
   console.log("[client1] GAME_RESUMED");
 });
 
-// --------------------
 // CLIENT 2
-// --------------------
 client2.on("connect", () => {
   console.log("[client2] Connected:", client2.id);
 
@@ -104,9 +97,7 @@ client2.on("PLAYER_RECONNECTED", (msg) => {
   console.log(msg);
 });
 
-// --------------------
 // RECONNECT CLIENT 1
-// --------------------
 setTimeout(() => {
   if (gameId) {
     console.log("[client1] Reconnecting...");
