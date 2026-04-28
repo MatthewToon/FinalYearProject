@@ -1,12 +1,8 @@
-/*
- * UCI move parsing helpers.
- *
- * Converts a protocol-level UCI move string (for example "e2e4" or "e7e8q")
- * into the object shape expected by chess.js.
- *
- * This file validates format only. It does not decide whether the move is
- * legal in the current position.
- */
+// UCI move parsing helpers.
+// Converts a protocol-level UCI move string (for example "e2e4" or "e7e8q")
+// into the object shape expected by chess.js.
+// This file validates format only. It does not decide whether the move is
+// legal in the current position.
 
 function parseUciMove(uci) {
   if (typeof uci !== "string") {

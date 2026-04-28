@@ -1,3 +1,5 @@
+# Local infrastructure used when running the chess app outside Render.
+
 version: "3.9"
 
 services:

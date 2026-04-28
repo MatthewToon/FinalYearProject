@@ -1,9 +1,6 @@
-/*
- * Script: testResign
- *
- * This is a small development/testing script used during the project.
- * Read the code below to see which server event or workflow it exercises.
- */
+// Script: testResign
+// This is a small development/testing script used during the project.
+// Read the code below to see which server event or workflow it exercises.
 
 const { io } = require("socket.io-client");
 
@@ -93,9 +90,7 @@ async function main() {
   let client2;
 
   try {
-    // ============================================================
     // STEP 1: Connect both players
-    // ============================================================
     client1 = await connectAndHello({
       label: "client1",
       clientId: "client-resign-1",
@@ -108,9 +103,7 @@ async function main() {
       playerId: "player-resign-2"
     });
 
-    // ============================================================
     // STEP 2: Create room
-    // ============================================================
     const gameCreatedPromise = waitForEvent(client1.socket, "GAME_CREATED");
     const stateSyncCreatedPromise = waitForEvent(client1.socket, "STATE_SYNC");
 
@@ -135,9 +128,7 @@ async function main() {
 
     const gameId = gameCreated.payload.gameId;
 
-    // ============================================================
     // STEP 3: Join room
-    // ============================================================
     const gameJoinedPromise = waitForEvent(client2.socket, "GAME_JOINED");
     const gameStartClient1Promise = waitForEvent(client1.socket, "GAME_START");
     const gameStartClient2Promise = waitForEvent(client2.socket, "GAME_START");
@@ -191,9 +182,7 @@ async function main() {
       throw new Error(`Expected starting FEN after join, got ${syncClient1.payload.fen}`);
     }
 
-    // ============================================================
     // STEP 4: Play one opening move so the game is clearly active
-    // ============================================================
     const updateAfterE4Client1Promise = waitForEvent(client1.socket, "STATE_UPDATE");
     const updateAfterE4Client2Promise = waitForEvent(client2.socket, "STATE_UPDATE");
 
@@ -218,9 +207,7 @@ async function main() {
 
     currentRevision = updateAfterE4Client1.payload.revision;
 
-    // ============================================================
     // STEP 5: Black resigns
-    // ============================================================
     const concludedClient1Promise = waitForEvent(client1.socket, "GAME_CONCLUDED");
     const concludedClient2Promise = waitForEvent(client2.socket, "GAME_CONCLUDED");
     const resignSyncClient1Promise = waitForEvent(client1.socket, "STATE_SYNC");
@@ -279,9 +266,7 @@ async function main() {
       );
     }
 
-    // ============================================================
     // STEP 6: Verify further move submission is rejected
-    // ============================================================
     const rejectedPromise = waitForEvent(client1.socket, "ERROR");
 
     client1.socket.emit(

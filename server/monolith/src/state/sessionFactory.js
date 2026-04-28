@@ -1,14 +1,11 @@
-/*
- * Session factory.
- *
- * This file creates new authoritative in-memory game session objects in a
- * valid initial state. It is responsible for ensuring that a newly created
- * game starts with the correct default values required by the SRS, including:
- * WAITING_FOR_PLAYERS state
- * revision 0
- * standard starting FEN
- * null turn colour until the second player joins
- */
+// Session factory.
+// This file creates new authoritative in-memory game session objects in a
+// valid initial state. It is responsible for ensuring that a newly created
+// game starts with the correct default values required by the SRS, including:
+// WAITING_FOR_PLAYERS state
+// revision 0
+// standard starting FEN
+// null turn colour until the second player joins
 
 const crypto = require("crypto");
 const { SESSION_STATES, START_FEN } = require("../config/constants");

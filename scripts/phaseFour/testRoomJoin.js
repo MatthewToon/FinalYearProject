@@ -1,9 +1,6 @@
-/*
- * Script: testRoomJoin
- *
- * This is a small development/testing script used during the project.
- * Read the code below to see which server event or workflow it exercises.
- */
+// Script: testRoomJoin
+// This is a small development/testing script used during the project.
+// Read the code below to see which server event or workflow it exercises.
 
 const { io } = require("socket.io-client");
 
@@ -63,9 +60,7 @@ async function main() {
   let joinerMissingRoom;
 
   try {
-    // ============================================================
     // STEP 1: Creator connects and creates room
-    // ============================================================
     creator = await connectClient({
       clientId: "client-room-creator",
       playerId: "player-room-creator",
@@ -104,9 +99,7 @@ async function main() {
 
     const gameId = createResult.payload.gameId;
 
-    // ============================================================
     // STEP 2: Valid join with correct password
-    // ============================================================
     joinerOk = await connectClient({
       clientId: "client-room-joiner-ok",
       playerId: "player-room-joiner-ok",
@@ -143,9 +136,7 @@ async function main() {
       );
     });
 
-    // ============================================================
     // STEP 3: Wrong password test
-    // ============================================================
     joinerWrongPassword = await connectClient({
       clientId: "client-room-joiner-badpass",
       playerId: "player-room-joiner-badpass",
@@ -189,9 +180,7 @@ async function main() {
       );
     });
 
-    // ============================================================
     // STEP 4: Non-existent room test
-    // ============================================================
     joinerMissingRoom = await connectClient({
       clientId: "client-room-joiner-missing",
       playerId: "player-room-joiner-missing",

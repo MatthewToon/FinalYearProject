@@ -1,9 +1,6 @@
-/*
- * Script: testGameCompletion
- *
- * This is a small development/testing script used during the project.
- * Read the code below to see which server event or workflow it exercises.
- */
+// Script: testGameCompletion
+// This is a small development/testing script used during the project.
+// Read the code below to see which server event or workflow it exercises.
 
 const { randomUUID } = require("crypto");
 const { Chess } = require("../../server/monolith/node_modules/chess.js");

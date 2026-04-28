@@ -1,9 +1,6 @@
-/*
- * Prometheus metric registry.
- *
- * This file creates the metric objects that the rest of the backend updates.
- * Prometheus later scrapes them through the /metrics HTTP endpoint.
- */
+// Prometheus metric registry.
+// This file creates the metric objects that the rest of the backend updates.
+// Prometheus later scrapes them through the /metrics HTTP endpoint.
 
 const client = require("prom-client");
 

@@ -1,23 +1,17 @@
-/*
- * GAME HANDLERS (Protocol Entry Layer)
- *
- * Handles all incoming game-related WebSocket messages.
- *
- * Supported message flows:
- * GAME_CREATE
- * GAME_JOIN
- * MOVE_SUBMIT
- * GAME_RESUME
- * REMATCH_REQUEST
- * RESIGN
- *
- * Responsibilities:
- * Validate incoming protocol envelope
- * Ensure HELLO handshake has completed
- * Delegate to appropriate service layer
- * Emit protocol responses (success or error)
- *
- */
+// GAME HANDLERS (Protocol Entry Layer)
+// Handles all incoming game-related WebSocket messages.
+// Supported message flows:
+// GAME_CREATE
+// GAME_JOIN
+// MOVE_SUBMIT
+// GAME_RESUME
+// REMATCH_REQUEST
+// RESIGN
+// Responsibilities:
+// Validate incoming protocol envelope
+// Ensure HELLO handshake has completed
+// Delegate to appropriate service layer
+// Emit protocol responses (success or error)
 
 const MESSAGE_TYPES = require("../protocol/messageTypes");
 const ERROR_CODES = require("../protocol/errorCodes");
@@ -120,10 +114,6 @@ function emitMoveFailure(socket, clientMsgId, result, startedAtMs) {
       clientMsgId
     )
   );
-}
-
-function logHandlerEvent(handlerName, details = {}) {
-  console.log(`[gameHandlers:${handlerName}]`, details);
 }
 
 function registerGameHandlers(io, socket) {
@@ -401,33 +391,11 @@ function registerGameHandlers(io, socket) {
         return;
       }
 
-      logHandlerEvent("MOVE_SUBMIT:received", {
-        socketId: socket.id,
-        clientId: connection.clientId,
-        playerId: connection.playerId,
-        gameId,
-        expectedRevision,
-        uci,
-        clientMsgId: parsed.message.clientMsgId
-      });
-
       const result = await moveService.applyMove({
         gameId,
         playerId: connection.playerId,
         expectedRevision,
         uci
-      });
-
-      logHandlerEvent("MOVE_SUBMIT:service_result", {
-        gameId,
-        expectedRevision,
-        uci,
-        ok: result?.ok,
-        errorType: result?.errorType,
-        errorCode: result?.error?.code,
-        sessionRevision: result?.session?.revision,
-        sessionState: result?.session?.state,
-        sessionResult: result?.session?.result
       });
 
       if (!result.ok) {
@@ -450,14 +418,6 @@ function registerGameHandlers(io, socket) {
           parsed.message.clientMsgId
         )
       );
-
-      logHandlerEvent("MOVE_SUBMIT:before_state_update_broadcast", {
-        gameId: session.gameId,
-        revision: session.revision,
-        state: session.state,
-        result: session.result,
-        fen: session.fen
-      });
 
       broadcastService.broadcastToGame(
         io,
@@ -482,12 +442,6 @@ function registerGameHandlers(io, socket) {
       );
 
       if (session.state === "FINISHED" && session.result) {
-        logHandlerEvent("MOVE_SUBMIT:before_game_concluded_broadcast", {
-          gameId: session.gameId,
-          revision: session.revision,
-          result: session.result
-        });
-
         broadcastService.broadcastToGame(
           io,
           session.gameId,
@@ -526,13 +480,6 @@ function registerGameHandlers(io, socket) {
       }
 
       finishHandlerMetrics(MESSAGE_TYPES.MOVE_SUBMIT, "move_submit", startedAtMs, "accepted");
-      logHandlerEvent("MOVE_SUBMIT:completed", {
-        gameId: session.gameId,
-        revision: session.revision,
-        state: session.state,
-        result: session.result,
-        clientMsgId: parsed.message.clientMsgId
-      });
     } catch (error) {
       console.error("[gameHandlers:MOVE_SUBMIT] Unhandled exception:", {
         error,

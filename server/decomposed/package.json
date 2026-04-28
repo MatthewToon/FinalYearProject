@@ -1,0 +1,31 @@
+{
+  "name": "decomposed-services",
+  "version": "1.0.0",
+  "description": "Decomposed service-oriented implementation of the FYP Chess App",
+  "main": "src/gateway/index.js",
+  "scripts": {
+    "dev:gateway": "nodemon src/gateway/index.js",
+    "dev:session": "nodemon src/session/index.js",
+    "dev:game": "nodemon src/game/index.js",
+    "start:gateway": "node src/gateway/index.js",
+    "start:session": "node src/session/index.js",
+    "start:game": "node src/game/index.js"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "pg": "^8.20.0",
+    "redis": "^5.8.2",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">= 24 < 25"
+  }
+}

@@ -1,21 +1,17 @@
-/**
- * End-to-end monolith communication flow test.
- *
- * This test validates the full baseline protocol flow:
- * - HELLO / WELCOME
- * - GAME_CREATE
- * - GAME_JOIN
- * - GAME_START
- * - white MOVE_SUBMIT
- * - black MOVE_SUBMIT
- * - STATE_UPDATE after each accepted move
- * - disconnect handling
- * - PLAYER_LEFT
- * - final STATE_SYNC
- *
- * This acts as the final integration checkpoint for the monolith
- * communication-flow implementation stage.
- */
+// End-to-end monolith communication flow test.
+// This test validates the full baseline protocol flow:
+// - HELLO / WELCOME
+// - GAME_CREATE
+// - GAME_JOIN
+// - GAME_START
+// - white MOVE_SUBMIT
+// - black MOVE_SUBMIT
+// - STATE_UPDATE after each accepted move
+// - disconnect handling
+// - PLAYER_LEFT
+// - final STATE_SYNC
+// This acts as the final integration checkpoint for the monolith
+// communication-flow implementation stage.
 
 const { io } = require("socket.io-client");
 

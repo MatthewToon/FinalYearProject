@@ -1,12 +1,8 @@
-/*
- * Handshake service.
- *
- * This service contains the application logic for processing HELLO messages.
- * It updates the connection registry so the server knows that a socket has
- * completed the initial protocol handshake.
- *
- * It does not emit socket events directly; handlers do that.
- */
+// Handshake service.
+// This service contains the application logic for processing HELLO messages.
+// It updates the connection registry so the server knows that a socket has
+// completed the initial protocol handshake.
+// It does not emit socket events directly; handlers do that.
 
 const connectionRegistry = require("../connection/connectionRegistry");
 

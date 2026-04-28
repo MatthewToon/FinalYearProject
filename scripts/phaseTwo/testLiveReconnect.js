@@ -1,9 +1,6 @@
-/*
- * Script: testLiveReconnect
- *
- * This is a small development/testing script used during the project.
- * Read the code below to see which server event or workflow it exercises.
- */
+// Script: testLiveReconnect
+// This is a small development/testing script used during the project.
+// Read the code below to see which server event or workflow it exercises.
 
 const { io } = require("socket.io-client");
 
@@ -13,9 +10,7 @@ let gameId = null;
 let currentRevision = 0;
 let reconnectClient = null;
 
-// =====================
 // HELPER: submit move safely
-// =====================
 function submitMove(client, label, uci) {
   console.log(`[${label}] submitting move: ${uci} (rev=${currentRevision})`);
 
@@ -30,9 +25,7 @@ function submitMove(client, label, uci) {
   });
 }
 
-// =====================
 // CLIENT 1 (WHITE)
-// =====================
 const client1 = io(SERVER_URL);
 
 client1.on("connect", () => {
@@ -77,9 +70,7 @@ client1.on("MOVE_ACCEPTED", () => {
   console.log("[client1] MOVE_ACCEPTED");
 });
 
-// =====================
 // CLIENT 2 (BLACK)
-// =====================
 const client2 = io(SERVER_URL);
 
 client2.on("connect", () => {
@@ -137,9 +128,7 @@ client2.on("PLAYER_RECONNECTED", (msg) => {
   console.log("[client2] PLAYER_RECONNECTED:", msg.payload);
 });
 
-// =====================
 // OPENING SEQUENCE
-// =====================
 
 // 1. e4
 setTimeout(() => {
@@ -156,17 +145,13 @@ setTimeout(() => {
   submitMove(client1, "client1", "g1f3");
 }, 6000);
 
-// =====================
 // DISCONNECT WHITE MID-GAME
-// =====================
 setTimeout(() => {
   console.log("\n--- Disconnecting client1 mid-game ---\n");
   client1.disconnect();
 }, 7500);
 
-// =====================
 // RECONNECT WHITE
-// =====================
 setTimeout(() => {
   console.log("\n--- Reconnecting client1 ---\n");
 
@@ -220,9 +205,7 @@ setTimeout(() => {
   });
 }, 9500);
 
-// =====================
 // CONTINUE GAME AFTER RECONNECT
-// =====================
 
 // 2... Nc6
 setTimeout(() => {
@@ -241,9 +224,7 @@ setTimeout(() => {
   submitMove(client2, "client2", "f8c5");
 }, 14500);
 
-// =====================
 // END TEST
-// =====================
 setTimeout(() => {
   console.log("\n--- Test complete ---\n");
 

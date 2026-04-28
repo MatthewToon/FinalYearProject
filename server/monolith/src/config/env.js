@@ -1,11 +1,7 @@
-/*
- * Environment/config loader.
- *
- * This file reads values from .env and exposes one central config object for
- * the rest of the backend.
- *
- * Keeping env reads here avoids scattering process.env lookups all over the app.
- */
+// Environment/config loader.
+// This file reads values from .env and exposes one central config object for
+// the rest of the backend.
+// Keeping env reads here avoids scattering process.env lookups all over the app.
 
 require("dotenv").config();
 

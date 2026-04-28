@@ -1,9 +1,6 @@
-/*
- * Metric update helpers.
- *
- * These wrapper functions hide the direct prom-client calls from the rest
- * of the code, so handlers/services can just say what happened.
- */
+// Metric update helpers.
+// These wrapper functions hide the direct prom-client calls from the rest
+// of the code, so handlers/services can just say what happened.
 
 const {
   socketMessagesTotal,

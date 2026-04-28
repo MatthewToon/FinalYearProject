@@ -1,3 +1,5 @@
+# Render deployment blueprint for the monolithic baseline.
+
 services:
   - type: web
     runtime: node
@@ -23,7 +25,7 @@ services:
     name: fyp-chess-client
     rootDir: client
     buildCommand: npm install && npm run build
-    staticPublishPath: client/dist
+    staticPublishPath: dist
     plan: free
     autoDeployTrigger: commit
     routes:

@@ -1,11 +1,8 @@
-/*
- * Disconnect handler.
- *
- * This handler responds to Socket.IO disconnect events. It removes the socket
- * from the connection registry, delegates session-level disconnect handling to
- * the disconnect service, and emits PLAYER_LEFT / STATE_SYNC to the remaining
- * player(s) if the disconnected socket belonged to an active game.
- */
+// Disconnect handler.
+// This handler responds to Socket.IO disconnect events. It removes the socket
+// from the connection registry, delegates session-level disconnect handling to
+// the disconnect service, and emits PLAYER_LEFT / STATE_SYNC to the remaining
+// player(s) if the disconnected socket belonged to an active game.
 
 const MESSAGE_TYPES = require("../protocol/messageTypes");
 const { createServerMessage } = require("../protocol/envelope");
@@ -20,7 +17,6 @@ const {
 
 function registerDisconnectHandler(io, socket) {
   socket.on("disconnect", async () => {
-    console.log(`Socket disconnected: ${socket.id}`);
     const startedAtMs = Date.now();
     recordSocketMessage("DISCONNECT", "received");
 

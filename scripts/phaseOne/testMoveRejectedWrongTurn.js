@@ -1,11 +1,8 @@
-/**
- * Negative-path integration test:
- * black attempts to move first before white has moved.
- *
- * Expected result:
- * - server rejects the move with MOVE_REJECTED
- * - rejection code should be NOT_YOUR_TURN
- */
+// Negative-path integration test:
+// black attempts to move first before white has moved.
+// Expected result:
+// - server rejects the move with MOVE_REJECTED
+// - rejection code should be NOT_YOUR_TURN
 
 const { io } = require("socket.io-client");
 

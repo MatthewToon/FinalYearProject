@@ -1,17 +1,13 @@
-/*
- * Move submission service.
- *
- * This service applies chess moves to the authoritative in-memory game
- * session. It is responsible for:
- * - validating that a move can be submitted in the current state
- * - checking the submitted revision
- * - checking turn ownership
- * - validating the move using chess.js
- * - updating authoritative session state
- * - incrementing the revision
- *
- * It does not emit socket events directly; handlers do that.
- */
+// Move submission service.
+// This service applies chess moves to the authoritative in-memory game
+// session. It is responsible for:
+// - validating that a move can be submitted in the current state
+// - checking the submitted revision
+// - checking turn ownership
+// - validating the move using chess.js
+// - updating authoritative session state
+// - incrementing the revision
+// It does not emit socket events directly; handlers do that.
 
 const { Chess } = require("chess.js");
 const sessionStore = require("../state/sessionStore");
@@ -20,10 +16,6 @@ const { parseUciMove } = require("../protocol/uci");
 const ERROR_CODES = require("../protocol/errorCodes");
 const { pool } = require("../persistence/db");
 const { SESSION_STATES, START_FEN } = require("../config/constants");
-
-function logMove(details) {
-  console.log("[moveService]", details);
-}
 
 function buildChessFromSessionHistory(session) {
   const startingFen = session.initialFen || START_FEN;
@@ -82,14 +74,6 @@ function applyGameCompletionState(session, chess) {
 
 async function applyMove({ gameId, playerId, expectedRevision, uci }) {
   try {
-    logMove({
-      stage: "received",
-      gameId,
-      playerId,
-      expectedRevision,
-      uci
-    });
-
     const session = await sessionStore.getSession(gameId);
 
     if (!session) {
@@ -102,18 +86,6 @@ async function applyMove({ gameId, playerId, expectedRevision, uci }) {
         }
       };
     }
-
-    logMove({
-      stage: "session_loaded",
-      gameId,
-      playerId,
-      revision: session.revision,
-      state: session.state,
-      turnColour: session.turnColour,
-      result: session.result,
-      fen: session.fen,
-      moveHistoryLength: session.moveHistory.length
-    });
 
     if (!stateMachine.canSubmitMove(session)) {
       return {
@@ -189,13 +161,6 @@ async function applyMove({ gameId, playerId, expectedRevision, uci }) {
     }
 
     if (chess.fen() !== session.fen) {
-      logMove({
-        stage: "fen_mismatch",
-        gameId,
-        expectedFen: session.fen,
-        reconstructedFen: chess.fen()
-      });
-
       return {
         ok: false,
         errorType: "ERROR",
@@ -206,19 +171,11 @@ async function applyMove({ gameId, playerId, expectedRevision, uci }) {
       };
     }
 
-    let appliedMove;
+  let appliedMove;
 
-    try {
-      appliedMove = chess.move(parsedMove.move);
-    } catch (error) {
-      logMove({
-        stage: "illegal_move_exception",
-        gameId,
-        uci,
-        parsedMove: parsedMove.move,
-        error: error.message
-      });
-
+  try {
+    appliedMove = chess.move(parsedMove.move);
+  } catch (error) {
       return {
         ok: false,
         errorType: "MOVE_REJECTED",
@@ -229,14 +186,7 @@ async function applyMove({ gameId, playerId, expectedRevision, uci }) {
       };
     }
 
-    if (!appliedMove) {
-      logMove({
-        stage: "illegal_move_null",
-        gameId,
-        uci,
-        parsedMove: parsedMove.move
-      });
-
+  if (!appliedMove) {
       return {
         ok: false,
         errorType: "MOVE_REJECTED",
@@ -246,17 +196,6 @@ async function applyMove({ gameId, playerId, expectedRevision, uci }) {
         }
       };
     }
-
-    logMove({
-      stage: "move_applied_in_memory",
-      gameId,
-      uci,
-      san: appliedMove.san,
-      from: appliedMove.from,
-      to: appliedMove.to,
-      previousRevision: session.revision,
-      previousFen: session.fen
-    });
 
     session.fen = chess.fen();
     session.turnColour = chess.turn() === "w" ? "white" : "black";
@@ -274,16 +213,6 @@ async function applyMove({ gameId, playerId, expectedRevision, uci }) {
       revision: session.revision,
       submittedBy: playerId,
       createdAt: new Date().toISOString()
-    });
-
-    logMove({
-      stage: "session_updated",
-      gameId,
-      revision: session.revision,
-      state: session.state,
-      result: session.result,
-      turnColour: session.turnColour,
-      fen: session.fen
     });
 
     try {
@@ -345,15 +274,6 @@ async function applyMove({ gameId, playerId, expectedRevision, uci }) {
         }
       };
     }
-
-    logMove({
-      stage: "completed",
-      gameId,
-      revision: session.revision,
-      state: session.state,
-      result: session.result,
-      fen: session.fen
-    });
 
     return {
       ok: true,

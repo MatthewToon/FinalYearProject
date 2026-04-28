@@ -1,9 +1,6 @@
-/*
- * Script: testEndToEnd
- *
- * This is a small development/testing script used during the project.
- * Read the code below to see which server event or workflow it exercises.
- */
+// Script: testEndToEnd
+// This is a small development/testing script used during the project.
+// Read the code below to see which server event or workflow it exercises.
 
 const { io } = require("socket.io-client");
 
@@ -74,9 +71,7 @@ async function main() {
   let reconnectClient1;
 
   try {
-    // ============================================================
     // STEP 1: Connect both players
-    // ============================================================
     client1 = await connectAndHello({
       label: "client1",
       clientId: "client-e2e-1",
@@ -89,9 +84,7 @@ async function main() {
       playerId: "player-e2e-2"
     });
 
-    // ============================================================
     // STEP 2: Create room
-    // ============================================================
     const gameCreatedPromise = waitForEvent(client1.socket, "GAME_CREATED");
     const stateSyncCreatedPromise = waitForEvent(client1.socket, "STATE_SYNC");
 
@@ -116,9 +109,7 @@ async function main() {
 
     const gameId = gameCreated.payload.gameId;
 
-    // ============================================================
     // STEP 3: Join room
-    // ============================================================
     const gameJoinedPromise = waitForEvent(client2.socket, "GAME_JOINED");
     const gameStartClient1Promise = waitForEvent(client1.socket, "GAME_START");
     const gameStartClient2Promise = waitForEvent(client2.socket, "GAME_START");
@@ -164,11 +155,9 @@ async function main() {
 
     let currentRevision = syncClient1.payload.revision;
 
-    // ============================================================
     // STEP 4: Play a few moves
-    // ============================================================
 
-    // ---- Move 1: e2e4 ----
+    // Move 1: e2e4
     const moveAcceptedE4Promise = waitForEvent(client1.socket, "MOVE_ACCEPTED");
     const updateAfterE4Client1Promise = waitForEvent(client1.socket, "STATE_UPDATE");
     const updateAfterE4Client2Promise = waitForEvent(client2.socket, "STATE_UPDATE");
@@ -199,7 +188,7 @@ async function main() {
 
     currentRevision = updateAfterE4Client1.payload.revision;
 
-    // ---- Move 2: e7e5 ----
+    // Move 2: e7e5
     const moveAcceptedE5Promise = waitForEvent(client2.socket, "MOVE_ACCEPTED");
     const updateAfterE5Client1Promise = waitForEvent(client1.socket, "STATE_UPDATE");
     const updateAfterE5Client2Promise = waitForEvent(client2.socket, "STATE_UPDATE");
@@ -230,15 +219,11 @@ async function main() {
 
     currentRevision = updateAfterE5Client1.payload.revision;
 
-    // ============================================================
     // STEP 5: Disconnect client1
-    // ============================================================
     console.log("\n--- Disconnecting client1 ---\n");
     client1.socket.disconnect();
 
-    // ============================================================
     // STEP 6: Resume client1
-    // ============================================================
     reconnectClient1 = await connectAndHello({
       label: "client1-resume",
       clientId: "client-e2e-1",
@@ -281,9 +266,7 @@ async function main() {
 
     currentRevision = resumedSync.payload.revision;
 
-    // ============================================================
     // STEP 7: Continue playing after resume
-    // ============================================================
     const moveAcceptedNf3Promise = waitForEvent(
       reconnectClient1.socket,
       "MOVE_ACCEPTED"

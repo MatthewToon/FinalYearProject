@@ -1,18 +1,14 @@
-/*
- * Game lifecycle service.
- *
- * This service contains the application logic for creating and managing game
- * sessions. At this stage, it supports:
- * GAME_CREATE
- * GAME_JOIN
- * GAME_RESUME
- * REMATCH_REQUEST
- * RESIGN
- * internal transition from WAITING_FOR_PLAYERS to IN_PROGRESS
- *
- * It does not emit socket events directly. Instead, it returns structured
- * results to the handler layer, which is responsible for protocol responses.
- */
+// Game lifecycle service.
+// This service contains the application logic for creating and managing game
+// sessions. At this stage, it supports:
+// GAME_CREATE
+// GAME_JOIN
+// GAME_RESUME
+// REMATCH_REQUEST
+// RESIGN
+// internal transition from WAITING_FOR_PLAYERS to IN_PROGRESS
+// It does not emit socket events directly. Instead, it returns structured
+// results to the handler layer, which is responsible for protocol responses.
 
 const sessionFactory = require("../state/sessionFactory");
 const sessionStore = require("../state/sessionStore");
